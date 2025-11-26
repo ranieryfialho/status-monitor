@@ -1,26 +1,80 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+ 
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* LIGHT MODE - Baseado na imagem (Fundo claro, cards brancos) */
+    --background: 210 20% 98%;    /* Um cinza muito suave, quase branco */
+    --foreground: 224 71% 4%;     /* Texto quase preto */
+
+    --card: 0 0% 100%;            /* Branco puro */
+    --card-foreground: 224 71% 4%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+ 
+    /* PRIMARY: Aquele roxo vibrante da imagem */
+    --primary: 245 100% 60%;      /* Roxo/Azul elétrico vibrante */
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+ 
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+ 
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 245 100% 60%;         /* Anel de foco da mesma cor do primary */
+ 
+    --radius: 1rem;               /* Aumentei para 16px para ficar mais arredondado */
+  }
+ 
+  .dark {
+    /* DARK MODE - Baseado na imagem (Fundo Navy Profundo) */
+    --background: 222 47% 11%;    /* #0B1437 - Azul Marinho Profundo */
+    --foreground: 210 40% 98%;    /* Texto branco */
+ 
+    --card: 217 33% 17%;          /* #111C44 - Um tom mais claro de azul para os cards */
+    --card-foreground: 210 40% 98%;
+ 
+    --popover: 217 33% 17%;
+    --popover-foreground: 210 40% 98%;
+ 
+    /* Mantém o Roxo Vibrante ou ajusta levemente para brilhar no escuro */
+    --primary: 245 100% 65%; 
+    --primary-foreground: 210 40% 98%;
+ 
+    --secondary: 217 33% 25%;
+    --secondary-foreground: 210 40% 98%;
+ 
+    --muted: 217 33% 25%;
+    --muted-foreground: 215 20.2% 65.1%;
+ 
+    --accent: 217 33% 25%;
+    --accent-foreground: 210 40% 98%;
+ 
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+ 
+    --border: 217 33% 25%;
+    --input: 217 33% 25%;
+    --ring: 245 100% 65%;
   }
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
