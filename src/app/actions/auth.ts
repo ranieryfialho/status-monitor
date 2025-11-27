@@ -29,7 +29,7 @@ export async function loginAction(prevState: LoginState, formData: FormData) {
       const isPasswordValid = await compare(password, admin.password)
 
       if (isPasswordValid) {
-        (await cookies()).set('admin_session', 'true', {
+        (await cookies()).set('admin_session', admin.id, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           maxAge: 60 * 60 * 24,
@@ -38,7 +38,6 @@ export async function loginAction(prevState: LoginState, formData: FormData) {
         redirect('/admin')
       }
     }
-
   }
 
   const client = await prisma.client.findUnique({
@@ -46,11 +45,9 @@ export async function loginAction(prevState: LoginState, formData: FormData) {
   })
 
   if (client) {
-
     if (client.accessCode === password) {
-
+      // Sucesso Cliente!
       (await cookies()).delete('admin_session')
-      
       redirect(`/dashboard/${client.slug}`)
     }
   }

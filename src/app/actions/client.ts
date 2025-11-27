@@ -1,9 +1,16 @@
 'use server'
 
 import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
 import prisma from "@/lib/prisma"
 
 export async function addClientAction(formData: FormData) {
+  const adminId = (await cookies()).get('admin_session')?.value
+
+  if (!adminId) {
+    return { error: true, message: "Sessão expirada. Faça login novamente." }
+  }
+
   await new Promise(resolve => setTimeout(resolve, 1000))
 
   const name = formData.get("name") as string
@@ -24,6 +31,7 @@ export async function addClientAction(formData: FormData) {
         name,
         slug,
         accessCode,
+        adminId: adminId,
         sites: {
           create: {
             slug: siteName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'),
@@ -40,7 +48,7 @@ export async function addClientAction(formData: FormData) {
     
   } catch (error) {
     console.error("Erro ao criar cliente:", error)
-    return { error: true, message: "Erro ao criar cliente. Verifique se o slug já existe." }
+    return { error: true, message: "Erro ao criar. Verifique se o Login (slug) já existe." }
   }
 }
 
@@ -57,6 +65,7 @@ export async function addSiteAction(formData: FormData) {
   }
 
   try {
+    // 1. Encontra o cliente
     const client = await prisma.client.findUnique({
       where: { slug: clientSlug }
     })
@@ -75,7 +84,9 @@ export async function addSiteAction(formData: FormData) {
       }
     })
 
+    revalidatePath("/admin")
     revalidatePath(`/dashboard/${clientSlug}`)
+    
     return { success: true, message: "Site adicionado com sucesso!" }
 
   } catch (error) {

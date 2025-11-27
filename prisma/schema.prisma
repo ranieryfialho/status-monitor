@@ -7,13 +7,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  clients   Client[] 
+}
+
 model Client {
   id         String   @id @default(cuid())
   slug       String   @unique
   name       String
   accessCode String
   createdAt  DateTime @default(now())
-  
+    adminId    String
+  admin      Admin    @relation(fields: [adminId], references: [id])
+
   sites      Site[]
 }
 
@@ -30,13 +41,4 @@ model Site {
   createdAt DateTime @default(now())
 
   @@unique([clientId, slug])
-}
-
-// ADMINS
-model Admin {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String   // Aqui guardaremos o Hash, não a senha pura
-  createdAt DateTime @default(now())
 }

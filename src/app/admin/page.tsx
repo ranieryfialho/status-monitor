@@ -1,7 +1,10 @@
 import Link from "next/link"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 import prisma from "@/lib/prisma"
 import { logoutAction } from "@/app/actions/auth"
 import { AddClientDialog } from "@/components/add-client-dialog"
+import { AddSiteDialog } from "@/components/add-site-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,13 +22,23 @@ import {
   CheckCircle2, 
   ExternalLink, 
   LayoutDashboard, 
-  Server,
-  LogOut 
+  Server, 
+  LogOut,
+  PlusCircle
 } from "lucide-react"
 
 export default async function AdminDashboard() {
   
+  const adminId = (await cookies()).get('admin_session')?.value
+
+  if (!adminId) {
+    redirect('/login')
+  }
+
   const clients = await prisma.client.findMany({
+    where: {
+      adminId: adminId
+    },
     include: {
       sites: true
     },
@@ -35,7 +48,7 @@ export default async function AdminDashboard() {
   })
 
   const totalSitesCount = clients.reduce((acc, client) => acc + client.sites.length, 0)
-  const sitesOnline = totalSitesCount
+  const sitesOnline = totalSitesCount 
   const sitesOffline = 0
 
   return (
@@ -76,7 +89,7 @@ export default async function AdminDashboard() {
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{totalSitesCount} Sites</div>
             <p className="text-xs text-muted-foreground">
-              distribuídos em {clients.length} gestores
+              distribuídos em {clients.length} clientes
             </p>
           </CardContent>
         </Card>
@@ -112,7 +125,7 @@ export default async function AdminDashboard() {
         </Card>
       </div>
 
-      {/* LISTA DE CLIENTES (Vazia inicialmente, pois o banco está limpo) */}
+      {/* LISTA DE CLIENTES */}
       <Card className="border-none shadow-lg bg-card rounded-[20px] overflow-hidden">
         <div className="p-6 border-b border-border/50">
           <h3 className="text-lg font-bold text-foreground">Monitoramento em Tempo Real</h3>
@@ -120,7 +133,7 @@ export default async function AdminDashboard() {
         
         {clients.length === 0 ? (
           <div className="p-12 text-center text-muted-foreground">
-            Nenhum cliente cadastrado no banco de dados ainda.
+            Nenhum cliente cadastrado nesta conta.
             <br />
             Clique em "Novo Cliente" para começar.
           </div>
@@ -143,8 +156,10 @@ export default async function AdminDashboard() {
                       <span className="text-xs text-muted-foreground font-mono">{client.slug}</span>
                     </div>
                   </TableCell>
+                  
+                  {/* COLUNA DE SITES */}
                   <TableCell>
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-2 items-start">
                       {client.sites.map((site) => (
                         <a 
                           key={site.id}
@@ -157,8 +172,20 @@ export default async function AdminDashboard() {
                           {site.name}
                         </a>
                       ))}
+                      
+                      {/* BOTÃO PARA ADICIONAR NOVO SITE A ESTE CLIENTE */}
+                      <AddSiteDialog clientSlug={client.slug}>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-6 px-2 text-xs text-muted-foreground hover:text-primary border border-dashed border-muted-foreground/30"
+                        >
+                          <PlusCircle className="mr-1 h-3 w-3" /> Adicionar Site
+                        </Button>
+                      </AddSiteDialog>
                     </div>
                   </TableCell>
+
                   <TableCell>
                     <Badge variant="secondary" className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-0">
                       <Activity className="mr-1 h-3 w-3" /> {client.sites.length} Ativos
