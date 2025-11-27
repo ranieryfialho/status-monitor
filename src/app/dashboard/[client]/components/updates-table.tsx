@@ -46,13 +46,8 @@ export function UpdatesTable({ logs }: UpdatesTableProps) {
           </TableHeader>
           <TableBody>
             {logs.map((log, index) => (
-              <TableRow 
-                key={index} 
-                className="border-border/50 hover:bg-muted/30 transition-colors"
-              >
-                <TableCell className="pl-6 font-medium text-foreground">
-                  {log.plugin}
-                </TableCell>
+              <TableRow key={index} className="border-border/50 hover:bg-muted/30 transition-colors">
+                <TableCell className="pl-6 font-medium text-foreground">{log.plugin}</TableCell>
                 <TableCell className="text-muted-foreground">
                   <Badge variant="outline" className="font-mono text-xs border-border/50 bg-background/50">
                     {log.versao}

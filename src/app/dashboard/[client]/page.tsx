@@ -1,67 +1,92 @@
-import { notFound } from "next/navigation"
+import Link from "next/link"
+import { notFound, redirect } from "next/navigation"
 import { CLIENTS } from "@/lib/clients"
-import { fetchClientData } from "./lib/api"
-import { DashboardView } from "./components/dashboard-view"
-import { WPMonitorResponse } from "@/types/api"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Globe, ArrowRight, LogOut } from "lucide-react"
+import { logoutAction } from "@/app/actions/auth"
 
-interface DashboardData extends WPMonitorResponse {
-  analytics: {
-    name: string;
-    atual: number;
-    anterior: number;
-  }[];
-}
-
-// DADOS MOCKADOS
-const MOCK_DATA: DashboardData = {
-  sistema: {
-    nome_site: "Dra. Alice Cunha",
-    url: "https://dralaicecunha.com.br",
-    wp_version: "6.8.3",
-    php: "8.1.0",
-    ip: "192.168.1.1",
-  },
-  logs_recentes: [
-    { plugin: "Elementor", versao: "3.20.0", data: "2024-03-20 10:00:00" },
-    { plugin: "WP Rocket", versao: "3.15.8", data: "2024-03-19 14:30:00" },
-    { plugin: "Yoast SEO", versao: "22.3", data: "2024-03-18 09:15:00" },
-    { plugin: "WooCommerce", versao: "8.7.0", data: "2024-03-15 11:20:00" },
-    { plugin: "Contact Form 7", versao: "5.9", data: "2024-03-10 16:45:00" }
-  ],
-  backup: { 
-    ativo: true 
-  },
-  analytics: [
-    { name: "01/Set", atual: 400, anterior: 240 },
-    { name: "05/Set", atual: 300, anterior: 139 },
-    { name: "10/Set", atual: 200, anterior: 980 },
-    { name: "15/Set", atual: 278, anterior: 390 },
-    { name: "20/Set", atual: 189, anterior: 480 },
-    { name: "25/Set", atual: 239, anterior: 380 },
-    { name: "30/Set", atual: 349, anterior: 430 },
-  ]
-}
-
-export default async function DashboardPage({
+export default async function ClientSitesPage({
   params,
 }: {
   params: Promise<{ client: string }>
 }) {
   const { client: clientSlug } = await params
   
-  const clientConfig = CLIENTS.find((c) => c.slug === clientSlug)
+  const clientUser = CLIENTS.find((c) => c.slug === clientSlug)
   
-  if (!clientConfig) {
+  if (!clientUser) {
     notFound()
   }
 
-  let data = (await fetchClientData(clientSlug)) as unknown as DashboardData
-  
-  if (!data) {
-    data = MOCK_DATA
-  } else {
-    data = { ...data, analytics: MOCK_DATA.analytics }
+  // REDIRECT AUTOMÁTICO RESTAURADO
+  // Se o gestor só tem 1 site vinculado, não faz sentido mostrar uma lista de escolha.
+  // Mandamos ele direto para o dashboard desse único site.
+  if (clientUser.sites.length === 1) {
+     redirect(`/dashboard/${clientSlug}/${clientUser.sites[0].id}`)
   }
 
-  return <DashboardView clientName={clientConfig.name} data={data} />
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300">
+      
+      {/* CABEÇALHO */}
+      <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-sm font-medium text-muted-foreground">
+            Painel do Gestor
+          </h2>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Bem-vindo, {clientUser.name}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Selecione um site abaixo para visualizar o relatório detalhado.
+          </p>
+        </div>
+
+        <form action={logoutAction}>
+          <Button variant="outline" className="border-red-500/20 text-red-500 hover:bg-red-500/10 hover:text-red-600 transition-colors">
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair
+          </Button>
+        </form>
+      </div>
+
+      {/* GRID DE SITES (Apenas listagem, sem adicionar) */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {clientUser.sites.map((site) => (
+          <Link key={site.id} href={`/dashboard/${clientSlug}/${site.id}`} className="group">
+            <Card className="h-full border-none shadow-lg bg-card rounded-[20px] transition-all hover:shadow-xl hover:scale-[1.02] hover:bg-card/90 cursor-pointer border border-transparent hover:border-primary/20">
+              <CardHeader className="pb-4">
+                <div className="flex justify-between items-start">
+                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-2">
+                    <Globe className="h-5 w-5" />
+                  </div>
+                  <Badge variant="outline" className="bg-green-500/10 text-green-500 border-0">
+                    Monitorado
+                  </Badge>
+                </div>
+                <CardTitle className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+                  {site.name}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground truncate mb-4">
+                  {site.url}
+                </p>
+                <div className="flex items-center text-sm font-medium text-primary">
+                  Ver Dashboard <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        ))}
+        
+        {/* Removemos o botão de "Adicionar Site" daqui.
+            Agora somente o Admin (você) pode vincular sites pelo painel Admin ou código. 
+        */}
+
+      </div>
+    </div>
+  )
 }
