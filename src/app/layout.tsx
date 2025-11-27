@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
+import { Footer } from "@/components/footer"; // <--- Import do Footer
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,7 +21,7 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body 
         suppressHydrationWarning={true}
-        className={cn(inter.className, "bg-background text-foreground antialiased")}
+        className={cn(inter.className, "min-h-screen flex flex-col bg-background text-foreground antialiased")}
       >
         <ThemeProvider
           attribute="class"
@@ -28,7 +29,12 @@ export default function RootLayout({
           enableSystem={false}
           disableTransitionOnChange
         >
-          {children}
+          <main className="flex-1">
+            {children}
+          </main>
+          
+          <Footer />
+          
         </ThemeProvider>
       </body>
     </html>
