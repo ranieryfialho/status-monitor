@@ -4,6 +4,12 @@ export interface UpdateLog {
   data: string;
 }
 
+export interface InstalledPlugin {
+  nome: string;
+  versao: string;
+  autor: string;
+}
+
 export interface WPMonitorResponse {
   sistema: {
     nome_site: string;
@@ -11,7 +17,12 @@ export interface WPMonitorResponse {
     wp_version: string;
     php: string;
     ip: string;
+    tema?: {
+      nome: string;
+      versao: string;
+    };
   };
+  plugins_instalados?: InstalledPlugin[];
   logs_recentes: UpdateLog[];
   backup: {
     ativo: boolean;

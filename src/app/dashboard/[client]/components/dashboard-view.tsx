@@ -7,12 +7,15 @@ import { logoutAction } from "@/app/actions/auth"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { UpdatesTable } from "./updates-table"
-import { TrafficChart } from "./traffic-chart"
+import { UptimeMonitor } from "./uptime-monitor"
+import { InstalledPlugins } from "./installed-plugins"
 import { WPMonitorResponse } from "@/types/api"
 import { Download, LogOut } from "lucide-react"
 
 interface DashboardData extends WPMonitorResponse {
-  analytics: {
+  status: "online" | "offline";
+  lastCheck: string;
+  analytics?: {
     name: string;
     atual: number;
     anterior: number;
@@ -22,6 +25,10 @@ interface DashboardData extends WPMonitorResponse {
 interface DashboardViewProps {
   clientName: string;
   data: DashboardData;
+  siteCredentials: {
+    url: string;
+    token: string;
+  }
 }
 
 const container = {
@@ -39,8 +46,11 @@ const item = {
   show: { y: 0, opacity: 1 }
 }
 
-export function DashboardView({ clientName, data }: DashboardViewProps) {
+export function DashboardView({ clientName, data, siteCredentials }: DashboardViewProps) {
   const componentRef = useRef<HTMLDivElement>(null)
+  
+  // Status inicial vindo do servidor (Snapshot do momento do carregamento)
+  const isInitialOffline = data.status === "offline"
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
@@ -48,7 +58,10 @@ export function DashboardView({ clientName, data }: DashboardViewProps) {
   })
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300">
+    <div 
+      suppressHydrationWarning={true}
+      className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300"
+    >
       
       {/* CABEÇALHO (Visível apenas na tela) */}
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
@@ -62,13 +75,14 @@ export function DashboardView({ clientName, data }: DashboardViewProps) {
             </h1>
             <span className="text-2xl animate-pulse">👋</span>
           </div>
-          <p className="text-muted-foreground">
-            Aqui está o status atual do seu ambiente WordPress.
-          </p>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <p>Aqui está o status atual do seu ambiente WordPress.</p>
+          </div>
         </div>
 
         {/* Grupo de Botões (Logout + Download) */}
         <div className="flex items-center gap-2">
+          
           <form action={logoutAction}>
             <Button 
               variant="outline" 
@@ -93,7 +107,7 @@ export function DashboardView({ clientName, data }: DashboardViewProps) {
       {/* ÁREA IMPRESSA */}
       <div ref={componentRef} className="print-container">
         
-        {/* Padding interno */}
+        {/* Padding interno para o papel */}
         <div className="print:p-6">
           
           {/* Cabeçalho do PDF */}
@@ -109,42 +123,59 @@ export function DashboardView({ clientName, data }: DashboardViewProps) {
             animate="show"
             className="space-y-6"
           >
-            {/* GRID PRINCIPAL */}
+            {/* GRID PRINCIPAL (Cards de Status e Infra) */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               
+              {/* CARD 1: STATUS + TEMA */}
               <motion.div variants={item} className="break-inside-avoid">
-                <Card className="print-card p-6 border-none shadow-lg bg-card rounded-[20px]">
+                <Card className={`print-card p-6 border-none shadow-lg bg-card rounded-[20px] transition-colors duration-300 ${isInitialOffline ? 'bg-red-950/30 border border-red-900/50' : 'bg-card'}`}>
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-muted-foreground print-text-muted">Status do Site</span>
+                    <span className="text-sm font-medium text-muted-foreground print-text-muted">Ambiente</span>
                     <div className="flex items-center gap-2 mt-2">
-                      <span className="hidden print:inline-block h-3 w-3 rounded-full bg-green-500 border border-green-400"></span>
-                      <span className="relative flex h-3 w-3 print:hidden">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                      <span className={`relative flex h-3 w-3 print:hidden`}>
+                        <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isInitialOffline ? 'bg-red-500' : 'bg-green-400'}`}></span>
+                        <span className={`relative inline-flex rounded-full h-3 w-3 ${isInitialOffline ? 'bg-red-500' : 'bg-green-500'}`}></span>
                       </span>
-                      <span className="text-2xl font-bold text-foreground print-text-white">Online</span>
+                      <span className={`hidden print:inline-block h-3 w-3 rounded-full ${isInitialOffline ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                      
+                      <span className={`text-2xl font-bold ${isInitialOffline ? 'text-red-500' : 'text-foreground print-text-white'}`}>
+                        {isInitialOffline ? 'Offline' : 'Online'}
+                      </span>
                     </div>
-                    <span className="text-xs text-muted-foreground mt-2 print-text-muted">
-                      Versão WP: <span className="text-primary font-semibold print-text-primary">{data.sistema?.wp_version}</span>
-                    </span>
+                    {/* Exibe o Tema e WP */}
+                    <div className="flex flex-col gap-1 mt-2">
+                        <span className="text-xs text-muted-foreground print-text-muted">
+                          WP: <span className="text-primary font-semibold print-text-primary">{data.sistema?.wp_version}</span>
+                        </span>
+                        <span className="text-xs text-muted-foreground print-text-muted">
+                          Tema: <span className="text-foreground font-semibold">{data.sistema?.tema?.nome || "Padrão"} <span className="opacity-50">v{data.sistema?.tema?.versao}</span></span>
+                        </span>
+                    </div>
                   </div>
                 </Card>
               </motion.div>
 
+              {/* CARD 2: INFRAESTRUTURA (IP + PHP) */}
               <motion.div variants={item} className="break-inside-avoid">
                 <Card className="print-card p-6 border-none shadow-lg bg-card rounded-[20px]">
                   <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-muted-foreground print-text-muted">Endereço IP</span>
+                    <span className="text-sm font-medium text-muted-foreground print-text-muted">Infraestrutura</span>
                     <h3 className="text-2xl font-bold text-foreground mt-2 truncate print-text-white">
-                      {data.sistema?.ip || "127.0.0.1"}
+                      PHP {data.sistema?.php}
                     </h3>
-                    <a href={data.sistema?.url} className="text-xs text-primary hover:underline mt-2 truncate print-text-primary">
-                      {data.sistema?.url}
-                    </a>
+                    <div className="flex flex-col gap-1 mt-2">
+                        <span className="text-xs text-muted-foreground print-text-muted">
+                            IP: <span className="text-foreground font-mono print-text-white">{data.sistema?.ip || "-"}</span>
+                        </span>
+                        <a href={data.sistema?.url} className="text-xs text-primary hover:underline mt-1 truncate print-text-primary">
+                        {data.sistema?.url}
+                        </a>
+                    </div>
                   </div>
                 </Card>
               </motion.div>
               
+              {/* CARD 3: BACKUP */}
               <motion.div variants={item} className="break-inside-avoid">
                 <Card className="print-card p-6 border-none shadow-lg bg-card rounded-[20px]">
                   <div className="flex flex-col gap-1">
@@ -164,18 +195,32 @@ export function DashboardView({ clientName, data }: DashboardViewProps) {
 
             </div>
 
-            {/* GRID SECUNDÁRIO */}
+            {/* GRID SECUNDÁRIO (3 Colunas) */}
             <div className="grid gap-6 md:grid-cols-1 xl:grid-cols-3">
               
-              <motion.div variants={item} className="xl:col-span-2 break-inside-avoid">
-                <div className="print-card rounded-[20px] overflow-hidden p-1">
+              {/* COLUNA 1: Plugins Instalados */}
+              <motion.div variants={item} className="xl:col-span-1 break-inside-avoid">
+                <div className="print-card rounded-[20px] overflow-hidden p-1 h-full">
+                  <InstalledPlugins plugins={data.plugins_instalados || []} />
+                </div>
+              </motion.div>
+
+              {/* COLUNA 2: Histórico de Atualizações */}
+              <motion.div variants={item} className="xl:col-span-1 break-inside-avoid">
+                <div className="print-card rounded-[20px] overflow-hidden p-1 h-full">
                   <UpdatesTable logs={data.logs_recentes || []} />
                 </div>
               </motion.div>
 
+              {/* COLUNA 3: Monitor Real-Time */}
               <motion.div variants={item} className="xl:col-span-1 min-h-[300px] break-inside-avoid print-chart-container">
-                <div className="print-card h-full rounded-[20px] p-1">
-                  <TrafficChart data={data.analytics} />
+                <div className="print-card h-full w-full rounded-[20px] p-1">
+                  {/* MONITOR EM TEMPO REAL: Faz a verificação sozinho a cada 1s */}
+                  <UptimeMonitor 
+                    initialStatus={data.status} 
+                    siteUrl={siteCredentials.url}
+                    apiToken={siteCredentials.token}
+                  />
                 </div>
               </motion.div>
 
@@ -183,6 +228,74 @@ export function DashboardView({ clientName, data }: DashboardViewProps) {
           </motion.div>
         </div>
       </div>
+
+      <style jsx global>{`
+        @media print {
+          @page { margin: 15mm; size: auto; }
+          .no-print { display: none !important; }
+          
+          :root {
+            --background: 222 47% 11% !important; 
+            --foreground: 210 40% 98% !important; 
+            --card: 217 33% 17% !important; 
+            --card-foreground: 210 40% 98% !important;
+            --muted-foreground: 215 20.2% 65.1% !important;
+            --border: 217 33% 25% !important;
+            --primary: 245 100% 65% !important;
+          }
+
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          body {
+            background-color: hsl(222 47% 11%) !important;
+            color: hsl(210 40% 98%) !important;
+          }
+
+          .print-chart-container {
+            display: block !important;
+            height: 350px !important;
+            page-break-inside: avoid !important;
+          }
+          
+          .break-inside-avoid {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            margin-bottom: 24px;
+          }
+
+          .print-card, .card {
+            background-color: #111C44 !important; 
+            border: 1px solid #2B3674 !important;
+            color: white !important;
+            box-shadow: none !important;
+          }
+
+          h1, h2, h3, h4, p, div, span, strong { color: white !important; }
+          .print-text-muted, .text-muted-foreground { color: #A3AED0 !important; }
+          .print-text-primary, .text-primary, a { color: #7551FF !important; }
+
+          table, thead, tbody, tr, td, th {
+            background-color: #111C44 !important;
+            color: white !important;
+            border-color: #2B3674 !important;
+          }
+          tr:nth-child(even), tr:nth-child(odd) {
+             background-color: #111C44 !important;
+          }
+          .badge {
+             background-color: #0B1437 !important;
+             color: white !important;
+             border: 1px solid #2B3674;
+          }
+          .shadow-lg {
+            box-shadow: none !important;
+            border: 1px solid hsl(217 33% 25%) !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

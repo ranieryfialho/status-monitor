@@ -65,7 +65,6 @@ export async function addSiteAction(formData: FormData) {
   }
 
   try {
-    // 1. Encontra o cliente
     const client = await prisma.client.findUnique({
       where: { slug: clientSlug }
     })
@@ -92,5 +91,35 @@ export async function addSiteAction(formData: FormData) {
   } catch (error) {
     console.error("Erro ao adicionar site:", error)
     return { error: true, message: "Erro ao adicionar site." }
+  }
+}
+
+export async function deleteClientAction(formData: FormData) {
+  const clientId = formData.get("clientId") as string;
+  
+  if (!clientId) return;
+
+  try {
+    await prisma.client.delete({
+      where: { id: clientId }
+    });
+    revalidatePath("/admin");
+  } catch (error) {
+    console.error("Erro ao deletar cliente", error);
+  }
+}
+
+export async function deleteSiteAction(formData: FormData) {
+  const siteId = formData.get("siteId") as string;
+  
+  if (!siteId) return;
+
+  try {
+    await prisma.site.delete({
+      where: { id: siteId }
+    });
+    revalidatePath("/admin");
+  } catch (error) {
+    console.error("Erro ao deletar site", error);
   }
 }

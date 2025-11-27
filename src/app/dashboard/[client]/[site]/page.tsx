@@ -2,37 +2,30 @@ import { notFound } from "next/navigation"
 import prisma from "@/lib/prisma"
 import { fetchSiteData } from "../lib/api"
 import { DashboardView } from "../components/dashboard-view"
-import { WPMonitorResponse } from "@/types/api"
+import { WPMonitorResponse, UpdateLog } from "@/types/api"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
-interface DashboardData extends WPMonitorResponse {
-  analytics: { name: string; atual: number; anterior: number }[];
+// Interface estendida para suportar status de erro explícito
+export interface DashboardData extends WPMonitorResponse {
+  status: "online" | "offline";
+  lastCheck: string;
 }
 
+// Dados de Fallback (Vazio se der erro)
 const MOCK_DATA: DashboardData = {
+  status: "offline",
+  lastCheck: "-",
   sistema: {
-    nome_site: "Demo Site",
-    url: "https://demo.com",
-    wp_version: "6.8.3",
-    php: "8.1.0",
-    ip: "192.168.1.1",
+    nome_site: "Conexão Falhou",
+    url: "#",
+    wp_version: "-",
+    php: "-",
+    ip: "-",
   },
-  logs_recentes: [
-    { plugin: "Elementor", versao: "3.20.0", data: "2024-03-20 10:00:00" },
-    { plugin: "WP Rocket", versao: "3.15.8", data: "2024-03-19 14:30:00" },
-  ],
-  backup: { ativo: true },
-  analytics: [
-    { name: "01/Set", atual: 400, anterior: 240 },
-    { name: "05/Set", atual: 300, anterior: 139 },
-    { name: "10/Set", atual: 200, anterior: 980 },
-    { name: "15/Set", atual: 278, anterior: 390 },
-    { name: "20/Set", atual: 189, anterior: 480 },
-    { name: "25/Set", atual: 239, anterior: 380 },
-    { name: "30/Set", atual: 349, anterior: 430 },
-  ]
+  logs_recentes: [],
+  backup: { ativo: false }
 }
 
 export default async function DashboardPage({
@@ -42,6 +35,7 @@ export default async function DashboardPage({
 }) {
   const { client: clientSlug, site: siteId } = await params
   
+  // 1. Busca o cliente e seus sites no Banco de Dados
   const clientUser = await prisma.client.findUnique({
     where: { slug: clientSlug },
     include: { sites: true }
@@ -49,23 +43,35 @@ export default async function DashboardPage({
   
   if (!clientUser) notFound()
 
+  // 2. Encontra o site específico
   const siteConfig = clientUser.sites.find(s => s.id === siteId)
-  
   if (!siteConfig) notFound()
 
-  let data = (await fetchSiteData(clientSlug, siteId)) as unknown as DashboardData
+  // 3. Tenta buscar dados reais (Server Side - Carregamento Inicial)
+  const apiData = await fetchSiteData(clientSlug, siteId)
   
-  if (!data) {
-    data = { 
-        ...MOCK_DATA, 
-        sistema: { ...MOCK_DATA.sistema, nome_site: siteConfig.name, url: siteConfig.url }
+  let finalData: DashboardData;
+
+  if (!apiData) {
+    // CENÁRIO DE ERRO (SITE OFFLINE NO INÍCIO)
+    finalData = {
+      ...MOCK_DATA,
+      status: "offline",
+      lastCheck: new Date().toLocaleTimeString(),
+      sistema: { ...MOCK_DATA.sistema, nome_site: siteConfig.name, url: siteConfig.url }
     }
   } else {
-    data = { ...data, analytics: MOCK_DATA.analytics }
+    // CENÁRIO DE SUCESSO
+    finalData = {
+      ...apiData,
+      status: "online",
+      lastCheck: new Date().toLocaleTimeString()
+    }
   }
 
   return (
     <div>
+        {/* Botão de Voltar se houver múltiplos sites */}
         {clientUser.sites.length > 1 && (
             <div className="p-4 md:p-8 pb-0">
                 <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
@@ -77,7 +83,15 @@ export default async function DashboardPage({
             </div>
         )}
         
-        <DashboardView clientName={siteConfig.name} data={data} />
+        {/* Renderiza a View e passa as credenciais para o Monitor Real-Time */}
+        <DashboardView 
+            clientName={siteConfig.name} 
+            data={finalData} 
+            siteCredentials={{
+                url: siteConfig.url,
+                token: siteConfig.apiToken
+            }}
+        />
     </div>
   )
 }

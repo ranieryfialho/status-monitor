@@ -3,8 +3,9 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import prisma from "@/lib/prisma"
 import { logoutAction } from "@/app/actions/auth"
+import { deleteSiteAction } from "@/app/actions/client"
 import { AddClientDialog } from "@/components/add-client-dialog"
-import { AddSiteDialog } from "@/components/add-site-dialog"
+import { ClientActions } from "./components/client-actions"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -21,20 +22,21 @@ import {
   AlertCircle, 
   CheckCircle2, 
   ExternalLink, 
-  LayoutDashboard, 
   Server, 
   LogOut,
-  PlusCircle
+  Trash2
 } from "lucide-react"
 
 export default async function AdminDashboard() {
   
+  // 1. Verifica autenticação
   const adminId = (await cookies()).get('admin_session')?.value
 
   if (!adminId) {
     redirect('/login')
   }
 
+  // 2. Busca clientes do Admin
   const clients = await prisma.client.findMany({
     where: {
       adminId: adminId
@@ -47,6 +49,7 @@ export default async function AdminDashboard() {
     }
   })
 
+  // Calcula estatísticas
   const totalSitesCount = clients.reduce((acc, client) => acc + client.sites.length, 0)
   const sitesOnline = totalSitesCount 
   const sitesOffline = 0
@@ -161,28 +164,30 @@ export default async function AdminDashboard() {
                   <TableCell>
                     <div className="flex flex-col gap-2 items-start">
                       {client.sites.map((site) => (
-                        <a 
-                          key={site.id}
-                          href={site.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-sm text-primary hover:underline"
-                        >
-                          <ExternalLink className="h-3 w-3" />
-                          {site.name}
-                        </a>
+                        <div key={site.id} className="flex items-center gap-2 group">
+                            <a 
+                              href={site.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1 text-sm text-primary hover:underline"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              {site.name}
+                            </a>
+                            
+                            {/* BOTÃO DELETAR SITE INDIVIDUAL */}
+                            <form action={deleteSiteAction}>
+                                <input type="hidden" name="siteId" value={site.id} />
+                                <button 
+                                  type="submit" 
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 cursor-pointer" 
+                                  title="Remover este site"
+                                >
+                                    <Trash2 className="h-3 w-3" />
+                                </button>
+                            </form>
+                        </div>
                       ))}
-                      
-                      {/* BOTÃO PARA ADICIONAR NOVO SITE A ESTE CLIENTE */}
-                      <AddSiteDialog clientSlug={client.slug}>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2 text-xs text-muted-foreground hover:text-primary border border-dashed border-muted-foreground/30"
-                        >
-                          <PlusCircle className="mr-1 h-3 w-3" /> Adicionar Site
-                        </Button>
-                      </AddSiteDialog>
                     </div>
                   </TableCell>
 
@@ -191,13 +196,10 @@ export default async function AdminDashboard() {
                       <Activity className="mr-1 h-3 w-3" /> {client.sites.length} Ativos
                     </Badge>
                   </TableCell>
+                  
+                  {/* COLUNA DE AÇÕES COM DROPDOWN */}
                   <TableCell className="text-right pr-6">
-                    <Button asChild variant="ghost" size="sm" className="hover:bg-primary/10 hover:text-primary">
-                      <Link href={`/dashboard/${client.slug}`}>
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        Acessar Conta
-                      </Link>
-                    </Button>
+                    <ClientActions clientSlug={client.slug} clientId={client.id} />
                   </TableCell>
                 </TableRow>
               ))}
