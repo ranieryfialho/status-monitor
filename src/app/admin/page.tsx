@@ -10,21 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table"
 import { 
-  Activity, 
-  AlertCircle, 
-  CheckCircle2, 
-  ExternalLink, 
-  Server, 
-  LogOut,
-  Trash2
+  Activity, AlertCircle, CheckCircle2, ExternalLink, LayoutDashboard, Server, LogOut, Trash2
 } from "lucide-react"
 
 export default async function AdminDashboard() {
@@ -36,13 +25,16 @@ export default async function AdminDashboard() {
     redirect('/login')
   }
 
-  // 2. Busca clientes do Admin
+  // 2. Busca Clientes + Sites + Faturas
   const clients = await prisma.client.findMany({
     where: {
       adminId: adminId
     },
     include: {
-      sites: true
+      sites: true,
+      invoices: {
+        orderBy: { createdAt: 'desc' }
+      }
     },
     orderBy: {
       createdAt: 'desc'
@@ -160,7 +152,7 @@ export default async function AdminDashboard() {
                     </div>
                   </TableCell>
                   
-                  {/* COLUNA DE SITES */}
+                  {/* COLUNA DE SITES (LIMPA, APENAS LISTA E REMOÇÃO) */}
                   <TableCell>
                     <div className="flex flex-col gap-2 items-start">
                       {client.sites.map((site) => (
@@ -175,7 +167,6 @@ export default async function AdminDashboard() {
                               {site.name}
                             </a>
                             
-                            {/* BOTÃO DELETAR SITE INDIVIDUAL */}
                             <form action={deleteSiteAction}>
                                 <input type="hidden" name="siteId" value={site.id} />
                                 <button 
@@ -199,7 +190,11 @@ export default async function AdminDashboard() {
                   
                   {/* COLUNA DE AÇÕES COM DROPDOWN */}
                   <TableCell className="text-right pr-6">
-                    <ClientActions clientSlug={client.slug} clientId={client.id} />
+                    <ClientActions 
+                        clientSlug={client.slug} 
+                        clientId={client.id} 
+                        invoices={client.invoices}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

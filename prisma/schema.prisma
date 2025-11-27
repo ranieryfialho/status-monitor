@@ -1,44 +1,75 @@
+// 1. Configurações do Gerador
 generator client {
   provider = "prisma-client-js"
 }
 
+// 2. Conexão com o Banco (Supabase)
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+// --- MODELOS ---
+
+// Tabela de Administradores (Você)
 model Admin {
   id        String   @id @default(cuid())
   email     String   @unique
   name      String
-  password  String
+  password  String   // Hash da senha
   createdAt DateTime @default(now())
+
+  // Relação: Um Admin gerencia vários Clientes
   clients   Client[] 
 }
 
+// Tabela de Clientes (Gestores de Tráfego)
 model Client {
   id         String   @id @default(cuid())
-  slug       String   @unique
-  name       String
-  accessCode String
+  slug       String   @unique // Login (ex: agencia-foco)
+  name       String   // Nome (ex: Agência Foco)
+  accessCode String   // Senha simples
   createdAt  DateTime @default(now())
-    adminId    String
+  
+  // Relação: Pertence a um Admin
+  adminId    String
   admin      Admin    @relation(fields: [adminId], references: [id])
 
+  // Relação: Tem vários Sites
   sites      Site[]
+
+  // Relação: Tem várias Faturas (Cobranças)
+  invoices   Invoice[] 
 }
 
+// Tabela de Sites (WordPress)
 model Site {
   id        String   @id @default(cuid())
-  slug      String
-  name      String
-  url       String
-  apiToken  String
+  slug      String   // ID amigável na URL
+  name      String   // Nome do Site
+  url       String   // URL completa
+  apiToken  String   // Token do Plugin
   
+  // Relação: Pertence a um Cliente
   clientId  String
   client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
+  // Garante que um cliente não tenha dois sites com mesmo slug
   @@unique([clientId, slug])
+}
+
+model Invoice {
+  id          String   @id @default(cuid())
+  description String   // Ex: "Manutenção Out/2025"
+  amount      Float    // Valor (ex: 150.00)
+  status      String   @default("PENDING") // PENDING, PAID, CANCELLED
+  paymentUrl  String?  // Link de pagamento (Opcional no início)
+  
+  // Relação: Pertence a um Cliente
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id])
+
+  createdAt   DateTime @default(now())
 }
