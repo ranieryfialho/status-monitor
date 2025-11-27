@@ -4,13 +4,16 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import prisma from "@/lib/prisma"
 
+// --- AÇÃO 1: ADICIONAR NOVO CLIENTE (ADMIN) ---
 export async function addClientAction(formData: FormData) {
+  // Pega o ID do Admin logado para vincular o cliente a ele
   const adminId = (await cookies()).get('admin_session')?.value
 
   if (!adminId) {
     return { error: true, message: "Sessão expirada. Faça login novamente." }
   }
 
+  // Simula delay
   await new Promise(resolve => setTimeout(resolve, 1000))
 
   const name = formData.get("name") as string
@@ -26,12 +29,13 @@ export async function addClientAction(formData: FormData) {
   }
 
   try {
+    // Cria Cliente vinculado ao Admin + Primeiro Site
     await prisma.client.create({
       data: {
         name,
         slug,
         accessCode,
-        adminId: adminId,
+        adminId: adminId, // <--- ESSA LINHA É OBRIGATÓRIA AGORA
         sites: {
           create: {
             slug: siteName.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-'),
@@ -52,6 +56,7 @@ export async function addClientAction(formData: FormData) {
   }
 }
 
+// --- AÇÃO 2: ADICIONAR NOVO SITE (ADMIN) ---
 export async function addSiteAction(formData: FormData) {
   await new Promise(resolve => setTimeout(resolve, 1000))
 
@@ -65,6 +70,7 @@ export async function addSiteAction(formData: FormData) {
   }
 
   try {
+    // 1. Encontra o cliente
     const client = await prisma.client.findUnique({
       where: { slug: clientSlug }
     })
@@ -73,6 +79,7 @@ export async function addSiteAction(formData: FormData) {
       return { error: true, message: "Cliente não encontrado." }
     }
 
+    // 2. Cria o novo site vinculado ao cliente
     await prisma.site.create({
       data: {
         name: siteName,
@@ -94,32 +101,23 @@ export async function addSiteAction(formData: FormData) {
   }
 }
 
+// ... (Mantenha as funções deleteClientAction e deleteSiteAction aqui embaixo também, se já tiver colocado)
+// --- AÇÃO: DELETAR CLIENTE ---
 export async function deleteClientAction(formData: FormData) {
   const clientId = formData.get("clientId") as string;
-  
   if (!clientId) return;
-
   try {
-    await prisma.client.delete({
-      where: { id: clientId }
-    });
+    await prisma.client.delete({ where: { id: clientId } });
     revalidatePath("/admin");
-  } catch (error) {
-    console.error("Erro ao deletar cliente", error);
-  }
+  } catch (error) { console.error(error); }
 }
 
+// --- AÇÃO: DELETAR SITE ---
 export async function deleteSiteAction(formData: FormData) {
   const siteId = formData.get("siteId") as string;
-  
   if (!siteId) return;
-
   try {
-    await prisma.site.delete({
-      where: { id: siteId }
-    });
+    await prisma.site.delete({ where: { id: siteId } });
     revalidatePath("/admin");
-  } catch (error) {
-    console.error("Erro ao deletar site", error);
-  }
+  } catch (error) { console.error(error); }
 }
