@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { CheckCircle2, Loader2, AlertCircle } from "lucide-react"
+import { CheckCircle2, Loader2, AlertCircle, Lock, User } from "lucide-react"
 
 const initialState = {
   message: '',
@@ -37,12 +37,12 @@ export default function LoginPage() {
             Status Monitor
           </CardTitle>
           <CardDescription className="text-muted-foreground font-medium">
-            Painel de controle para clientes
+            Acesse sua conta para gerenciar
           </CardDescription>
         </CardHeader>
         
         <form action={formAction}>
-          <CardContent className="grid gap-6">
+          <CardContent className="grid gap-4">
             
             {state?.error && (
               <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg animate-accordion-down">
@@ -51,22 +51,47 @@ export default function LoginPage() {
               </div>
             )}
 
+            {/* CAMPO 1: USUÁRIO OU EMAIL */}
             <div className="grid gap-2">
-              <Label htmlFor="token" className="text-sm font-semibold text-foreground/80">
-                Token de Acesso
+              <Label htmlFor="login" className="text-sm font-semibold text-foreground/80">
+                Usuário ou Email
               </Label>
-              <Input
-                id="token"
-                name="token"
-                type="password"
-                placeholder="Insira sua chave de acesso"
-                className="h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-background transition-all"
-                required
-              />
+              <div className="relative">
+                <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="login"
+                  name="login"
+                  type="text"
+                  placeholder="Informe seu email ou login"
+                  className="pl-9 h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-background transition-all"
+                  required
+                />
+              </div>
             </div>
+
+            {/* CAMPO 2: SENHA */}
+            <div className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-sm font-semibold text-foreground/80">
+                  Senha
+                </Label>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="pl-9 h-12 rounded-xl bg-muted/50 border-transparent focus:border-primary focus:bg-background transition-all"
+                  required
+                />
+              </div>
+            </div>
+
           </CardContent>
           
-          <CardFooter className="flex flex-col gap-4 pb-8">
+          <CardFooter className="flex flex-col gap-4 pb-8 pt-2">
             <Button 
               className="w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all" 
               type="submit"
@@ -78,12 +103,12 @@ export default function LoginPage() {
                   Verificando...
                 </>
               ) : (
-                "Acessar Dashboard"
+                "Entrar no Sistema"
               )}
             </Button>
             
             <p className="text-xs text-center text-muted-foreground mt-2">
-              Problemas com o acesso?{" "}
+              Esqueceu sua senha?{" "}
               <Link href="#" className="font-semibold text-primary hover:text-primary/80 underline-offset-4 hover:underline">
                 Contate o suporte
               </Link>

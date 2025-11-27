@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { CLIENTS } from "@/lib/clients"
+import prisma from "@/lib/prisma"
 import { fetchSiteData } from "../lib/api"
 import { DashboardView } from "../components/dashboard-view"
 import { WPMonitorResponse } from "@/types/api"
@@ -42,10 +42,15 @@ export default async function DashboardPage({
 }) {
   const { client: clientSlug, site: siteId } = await params
   
-  const clientUser = CLIENTS.find((c) => c.slug === clientSlug)
+  const clientUser = await prisma.client.findUnique({
+    where: { slug: clientSlug },
+    include: { sites: true }
+  })
+  
   if (!clientUser) notFound()
 
   const siteConfig = clientUser.sites.find(s => s.id === siteId)
+  
   if (!siteConfig) notFound()
 
   let data = (await fetchSiteData(clientSlug, siteId)) as unknown as DashboardData
@@ -61,7 +66,6 @@ export default async function DashboardPage({
 
   return (
     <div>
-        {/* Botão de Voltar condicional */}
         {clientUser.sites.length > 1 && (
             <div className="p-4 md:p-8 pb-0">
                 <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
@@ -72,6 +76,7 @@ export default async function DashboardPage({
                 </Button>
             </div>
         )}
+        
         <DashboardView clientName={siteConfig.name} data={data} />
     </div>
   )

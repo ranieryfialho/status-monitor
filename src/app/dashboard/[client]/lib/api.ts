@@ -1,16 +1,24 @@
-import { CLIENTS } from "@/lib/clients";
+import prisma from "@/lib/prisma";
 import { WPMonitorResponse } from "@/types/api";
 
 export async function fetchSiteData(clientSlug: string, siteId: string): Promise<WPMonitorResponse | null> {
-  // 1. Encontra o gestor
-  const client = CLIENTS.find((c) => c.slug === clientSlug);
+  
+  // 1. Busca o cliente no Banco de Dados
+  const client = await prisma.client.findUnique({
+    where: { slug: clientSlug },
+    include: { sites: true } // Traz os sites juntos
+  });
+
   if (!client) return null;
 
   // 2. Encontra o site específico dentro da lista desse gestor
-  const site = client.sites.find((s) => s.id === siteId);
+  // (Como o ID agora é um CUID do banco ou o slug, vamos buscar pelo slug do site que definimos na criação)
+  const site = client.sites.find((s) => s.slug === siteId || s.id === siteId);
+  
   if (!site) return null;
 
   try {
+    // 3. Conecta no WordPress real usando os dados do banco
     const res = await fetch(`${site.url}/wp-json/status-monitor/v1/check`, {
       method: 'GET',
       headers: {

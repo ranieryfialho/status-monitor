@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
-import { CLIENTS } from "@/lib/clients"
+import prisma from "@/lib/prisma"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -14,15 +14,15 @@ export default async function ClientSitesPage({
 }) {
   const { client: clientSlug } = await params
   
-  const clientUser = CLIENTS.find((c) => c.slug === clientSlug)
+  const clientUser = await prisma.client.findUnique({
+    where: { slug: clientSlug },
+    include: { sites: true }
+  })
   
   if (!clientUser) {
     notFound()
   }
 
-  // REDIRECT AUTOMÁTICO RESTAURADO
-  // Se o gestor só tem 1 site vinculado, não faz sentido mostrar uma lista de escolha.
-  // Mandamos ele direto para o dashboard desse único site.
   if (clientUser.sites.length === 1) {
      redirect(`/dashboard/${clientSlug}/${clientUser.sites[0].id}`)
   }
@@ -30,7 +30,6 @@ export default async function ClientSitesPage({
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300">
       
-      {/* CABEÇALHO */}
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="text-sm font-medium text-muted-foreground">
@@ -52,7 +51,6 @@ export default async function ClientSitesPage({
         </form>
       </div>
 
-      {/* GRID DE SITES (Apenas listagem, sem adicionar) */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {clientUser.sites.map((site) => (
           <Link key={site.id} href={`/dashboard/${clientSlug}/${site.id}`} className="group">
@@ -81,11 +79,6 @@ export default async function ClientSitesPage({
             </Card>
           </Link>
         ))}
-        
-        {/* Removemos o botão de "Adicionar Site" daqui.
-            Agora somente o Admin (você) pode vincular sites pelo painel Admin ou código. 
-        */}
-
       </div>
     </div>
   )
