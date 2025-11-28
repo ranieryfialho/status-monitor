@@ -20,6 +20,7 @@ export async function loginAction(prevState: LoginState, formData: FormData) {
     return { error: true, message: 'Preencha usuário e senha.' }
   }
 
+  // --- LOGIN ADMIN ---
   if (login.includes('@')) {
     const admin = await prisma.admin.findUnique({
       where: { email: login }
@@ -29,10 +30,12 @@ export async function loginAction(prevState: LoginState, formData: FormData) {
       const isPasswordValid = await compare(password, admin.password)
 
       if (isPasswordValid) {
+        (await cookies()).delete('client_session');
+
         (await cookies()).set('admin_session', admin.id, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          maxAge: 60 * 60 * 24,
+          maxAge: 60 * 60 * 24 * 30,
           path: '/',
         })
         redirect('/admin')
@@ -46,8 +49,15 @@ export async function loginAction(prevState: LoginState, formData: FormData) {
 
   if (client) {
     if (client.accessCode === password) {
-      // Sucesso Cliente!
-      (await cookies()).delete('admin_session')
+      (await cookies()).delete('admin_session');
+
+      (await cookies()).set('client_session', client.slug, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 30,
+        path: '/',
+      })
+
       redirect(`/dashboard/${client.slug}`)
     }
   }
@@ -56,6 +66,8 @@ export async function loginAction(prevState: LoginState, formData: FormData) {
 }
 
 export async function logoutAction() {
-  (await cookies()).delete('admin_session')
+  const cookieStore = await cookies();
+  cookieStore.delete('admin_session')
+  cookieStore.delete('client_session');
   redirect('/login')
 }
