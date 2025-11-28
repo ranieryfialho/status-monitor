@@ -6,6 +6,7 @@ import { logoutAction } from "@/app/actions/auth"
 import { deleteSiteAction } from "@/app/actions/client"
 import { AddClientDialog } from "@/components/add-client-dialog"
 import { ClientActions } from "./components/client-actions"
+import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -18,14 +19,12 @@ import {
 
 export default async function AdminDashboard() {
   
-  // 1. Verifica autenticação
   const adminId = (await cookies()).get('admin_session')?.value
 
   if (!adminId) {
     redirect('/login')
   }
 
-  // 2. Busca Clientes + Sites + Faturas
   const clients = await prisma.client.findMany({
     where: {
       adminId: adminId
@@ -41,7 +40,6 @@ export default async function AdminDashboard() {
     }
   })
 
-  // Calcula estatísticas
   const totalSitesCount = clients.reduce((acc, client) => acc + client.sites.length, 0)
   const sitesOnline = totalSitesCount 
   const sitesOffline = 0
@@ -61,6 +59,10 @@ export default async function AdminDashboard() {
         </div>
         
         <div className="flex items-center gap-3">
+           
+           {/* Botão de Trocar Senha */}
+           <ChangePasswordDialog type="admin" />
+
            <form action={logoutAction}>
             <Button variant="outline" className="border-red-500/20 text-red-500 hover:bg-red-500/10 hover:text-red-600">
               <LogOut className="mr-2 h-4 w-4" />

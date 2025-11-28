@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Globe, ArrowRight, LogOut } from "lucide-react"
 import { logoutAction } from "@/app/actions/auth"
+import { ChangePasswordDialog } from "@/components/change-password-dialog" // <--- NOVO IMPORT
 
 export default async function ClientSitesPage({
   params,
@@ -43,12 +44,19 @@ export default async function ClientSitesPage({
           </p>
         </div>
 
-        <form action={logoutAction}>
-          <Button variant="outline" className="border-red-500/20 text-red-500 hover:bg-red-500/10 hover:text-red-600 transition-colors">
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
-        </form>
+        {/* ÁREA DE AÇÕES DO CLIENTE */}
+        <div className="flex items-center gap-2">
+          
+          {/* Botão de Trocar Senha */}
+          <ChangePasswordDialog type="client" identifier={clientSlug} />
+
+          <form action={logoutAction}>
+            <Button variant="outline" className="border-red-500/20 text-red-500 hover:bg-red-500/10 hover:text-red-600 transition-colors">
+              <LogOut className="mr-2 h-4 w-4" />
+              Sair
+            </Button>
+          </form>
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
