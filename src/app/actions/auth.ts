@@ -54,7 +54,7 @@ export async function loginAction(prevState: LoginState, formData: FormData) {
       (await cookies()).set('client_session', client.slug, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 60 * 24 * 30,
+        maxAge: 60 * 60 * 24 * 30, // Mantém 30 dias
         path: '/',
       })
 
