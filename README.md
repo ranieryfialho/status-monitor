@@ -1,36 +1,41 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Status Monitor - Dashboard para Agências WordPress
 
-## Getting Started
+O **Status Monitor** é uma plataforma SaaS/Dashboard desenvolvida para agências digitais e gestores de tráfego. O sistema permite monitorar a saúde técnica de múltiplos sites WordPress de forma centralizada ("headless") e gerenciar cobranças simples para clientes.
 
-First, run the development server:
+O projeto utiliza **Next.js 16** com **Server Actions** para o backend, **Prisma** para o banco de dados e **Tailwind CSS v4** para a estilização.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Funcionalidades Principais
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 🏢 Painel do Administrador (Agência)
+* **Gestão de Clientes:** Cadastro de clientes (Gestores/Donos de sites) com geração de slugs e códigos de acesso.
+* **Vinculação de Sites:** Adição de múltiplos sites WordPress por cliente, utilizando URL e Token de API.
+* **Gestão Financeira:** Criação de faturas simples com links de pagamento externos (ex: InfinitePay) e controle de status (Pendente/Pago).
+* **Visão Geral:** Dashboard com contagem total de sites online, offline e clientes ativos.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 👤 Painel do Cliente
+* **Monitoramento em Tempo Real:** Verificação de *uptime* (Online/Offline) com atualização ao vivo via polling.
+* **Status Técnico:** Visualização da versão do WordPress, versão do PHP, IP do servidor e tema ativo.
+* **Plugins e Logs:** Listagem de plugins instalados e histórico de atualizações recentes.
+* **Relatórios:** Geração de relatórios técnicos em PDF via `react-to-print`.
+* **Financeiro:** Visualização de faturas pendentes com link direto para pagamento.
+* **Segurança:** Possibilidade de alterar a própria senha de acesso.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🛠️ Stack Tecnológica
 
-To learn more about Next.js, take a look at the following resources:
+* **Framework:** [Next.js 16 (App Router)](https://nextjs.org/)
+* **Linguagem:** [TypeScript](https://www.typescriptlang.org/)
+* **Estilização:** [Tailwind CSS v4](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/) (Radix Primitives)
+* **Banco de Dados:** PostgreSQL (via [Prisma ORM](https://www.prisma.io/))
+* **Animações:** Framer Motion
+* **Ícones:** Lucide React
+* **Autenticação:** Customizada (BCrypt para Admin / Access Code para Clientes)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ⚙️ Pré-requisitos
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+* Node.js 18+ (Recomendado 20+ para Next.js 16).
+* Banco de dados PostgreSQL (Local ou hospedado como Supabase/Neon).
+* Um site WordPress com o endpoint de API compatível (veja abaixo).
