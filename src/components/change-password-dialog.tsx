@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useActionState } from "react"
-import { changePasswordAction } from "@/app/actions/settings"
+import { useState, useEffect, useActionState } from "react"
+// Importamos o tipo ChangePasswordState
+import { changePasswordAction, ChangePasswordState } from "@/app/actions/settings"
 import { Button } from "@/components/ui/button"
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger
@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Loader2, KeyRound, Lock } from "lucide-react"
 
-const initialState = {
+// Tipagem explícita aqui para casar com a Server Action
+const initialState: ChangePasswordState = {
   message: '',
   error: false,
   success: false
@@ -29,7 +30,7 @@ export function ChangePasswordDialog({ type, identifier }: ChangePasswordDialogP
   useEffect(() => {
     if (state?.success) {
       setOpen(false)
-      alert(state.message) // Ou use um Toast se tiver configurado
+      alert(state.message)
     }
   }, [state])
 
@@ -42,7 +43,7 @@ export function ChangePasswordDialog({ type, identifier }: ChangePasswordDialogP
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="sm:max-w-[425px] bg-card border-border">
+      <DialogContent className="sm:max-w-[425px] bg-card border-border text-foreground">
         <DialogHeader>
           <DialogTitle>Alterar Credenciais</DialogTitle>
           <DialogDescription>
@@ -55,7 +56,7 @@ export function ChangePasswordDialog({ type, identifier }: ChangePasswordDialogP
           {identifier && <input type="hidden" name="identifier" value={identifier} />}
 
           {state?.error && (
-            <div className="p-3 text-sm text-red-500 bg-red-500/10 rounded-md border border-red-500/20">
+            <div className="p-3 text-sm text-red-500 bg-red-500/10 rounded-md border border-red-500/20 flex items-center justify-center">
               {state.message}
             </div>
           )}
@@ -69,7 +70,7 @@ export function ChangePasswordDialog({ type, identifier }: ChangePasswordDialogP
                 name="currentPassword" 
                 type="password" 
                 placeholder="••••••••" 
-                className="pl-9" 
+                className="pl-9 bg-background" 
                 required 
               />
             </div>
@@ -84,14 +85,14 @@ export function ChangePasswordDialog({ type, identifier }: ChangePasswordDialogP
                 name="newPassword" 
                 type="password" 
                 placeholder="••••••••" 
-                className="pl-9" 
+                className="pl-9 bg-background" 
                 required 
               />
             </div>
           </div>
 
           <DialogFooter>
-            <Button type="submit" disabled={isPending} className="w-full">
+            <Button type="submit" disabled={isPending} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
               {isPending ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...</>
               ) : (
