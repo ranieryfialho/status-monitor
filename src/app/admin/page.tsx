@@ -8,6 +8,7 @@ import { AddClientDialog } from "@/components/add-client-dialog"
 import { ClientActions } from "./components/client-actions"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { MiniUptimeMonitor } from "./components/mini-uptime-monitor"
+import { GlobalStatusCard } from "./components/global-status-card" // <--- IMPORTADO
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,7 +16,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table"
 import { 
-  Activity, AlertCircle, CheckCircle2, ExternalLink, LayoutDashboard, Server, LogOut, Trash2
+  Activity, CheckCircle2, ExternalLink, Server, LogOut, Trash2
 } from "lucide-react"
 
 export default async function AdminDashboard() {
@@ -35,9 +36,13 @@ export default async function AdminDashboard() {
     orderBy: { createdAt: 'desc' }
   })
 
-  const totalSitesCount = clients.reduce((acc, client) => acc + client.sites.length, 0)
-  const sitesOnline = totalSitesCount 
-  const sitesOffline = 0
+  // Prepara a lista de sites para o monitor global
+  const allSites = clients.flatMap(client => 
+    client.sites.map(site => ({ url: site.url, apiToken: site.apiToken }))
+  );
+
+  const totalSitesCount = allSites.length;
+  // Calculamos apenas o total básico aqui, o status online/offline é responsabilidade do componente GlobalStatusCard em tempo real.
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300">
@@ -65,38 +70,44 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* CARDS DE RESUMO (Mantido igual) */}
+      {/* CARDS DE RESUMO */}
       <div className="grid gap-6 md:grid-cols-3 mb-8">
+        
+        {/* Card 1: Total */}
         <Card className="border-none shadow-lg bg-card rounded-[20px]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Monitorado</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Monitorado
+            </CardTitle>
             <Server className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{totalSitesCount} Sites</div>
-            <p className="text-xs text-muted-foreground">distribuídos em {clients.length} clientes</p>
+            <p className="text-xs text-muted-foreground">
+              distribuídos em {clients.length} clientes
+            </p>
           </CardContent>
         </Card>
+
+        {/* Card 2: Clientes Ativos */}
         <Card className="border-none shadow-lg bg-card rounded-[20px]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Sites Online</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Base de Clientes
+            </CardTitle>
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">{sitesOnline}</div>
-            <p className="text-xs text-muted-foreground">100% de disponibilidade</p>
+            <div className="text-2xl font-bold text-foreground">{clients.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Gestores ativos na plataforma
+            </p>
           </CardContent>
         </Card>
-        <Card className="border-none shadow-lg bg-card rounded-[20px]">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Alertas Críticos</CardTitle>
-            <AlertCircle className="h-4 w-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{sitesOffline}</div>
-            <p className="text-xs text-muted-foreground">Nenhuma ação necessária</p>
-          </CardContent>
-        </Card>
+
+        {/* Card 3: MONITORAMENTO GLOBAL EM TEMPO REAL */}
+        <GlobalStatusCard sites={allSites} />
+
       </div>
 
       {/* LISTA DE CLIENTES */}
@@ -114,10 +125,8 @@ export default async function AdminDashboard() {
             <TableHeader>
               <TableRow className="hover:bg-transparent border-border/50">
                 <TableHead className="pl-6 text-muted-foreground w-[200px]">Gestor / Cliente</TableHead>
-                {/* Dividi visualmente o cabeçalho para alinhar */}
                 <TableHead className="text-muted-foreground w-[220px]">Sites Vinculados</TableHead>
                 <TableHead className="text-muted-foreground text-center">Monitoramento (Uptime)</TableHead>
-                
                 <TableHead className="text-muted-foreground">Status Geral</TableHead>
                 <TableHead className="text-muted-foreground text-right pr-6">Ações</TableHead>
               </TableRow>
@@ -132,14 +141,11 @@ export default async function AdminDashboard() {
                     </div>
                   </TableCell>
                   
-                  {/* CÉLULA COMBINADA (SITE + MONITOR) */}
-                  {/* Usando colSpan=2 para ocupar o espaço de Sites e Monitoramento, mas controlando o layout interno */}
+                  {/* Célula de Sites + Mini Monitor */}
                   <TableCell className="py-4" colSpan={2}>
                     <div className="flex flex-col gap-3">
                       {client.sites.map((site) => (
                         <div key={site.id} className="flex items-center w-full group border-b last:border-0 border-border/40 pb-2 last:pb-0">
-                            
-                            {/* 1. NOME DO SITE (Largura fixa alinhada com o cabeçalho 'Sites Vinculados') */}
                             <div className="flex items-center gap-2 w-[220px] shrink-0">
                               <a 
                                 href={site.url} 
@@ -151,24 +157,18 @@ export default async function AdminDashboard() {
                                 <ExternalLink className="h-3.5 w-3.5 opacity-50 shrink-0" />
                                 <span className="truncate">{site.name}</span>
                               </a>
-                              
                               <form action={deleteSiteAction}>
                                   <input type="hidden" name="siteId" value={site.id} />
-                                  <button 
-                                    type="submit" 
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 cursor-pointer ml-1" 
-                                    title="Remover este site"
-                                  >
+                                  <button type="submit" className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 cursor-pointer ml-1">
                                       <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                               </form>
                             </div>
-
-                            {/* 2. MONITOR (Centralizado no espaço restante) */}
+                            
+                            {/* Mini Monitor Centralizado */}
                             <div className="flex-1 flex justify-center px-4">
                                 <MiniUptimeMonitor url={site.url} token={site.apiToken} />
                             </div>
-                            
                         </div>
                       ))}
                     </div>
@@ -181,11 +181,7 @@ export default async function AdminDashboard() {
                   </TableCell>
                   
                   <TableCell className="text-right pr-6 align-top py-4">
-                    <ClientActions 
-                        clientSlug={client.slug} 
-                        clientId={client.id} 
-                        invoices={client.invoices}
-                    />
+                    <ClientActions clientSlug={client.slug} clientId={client.id} invoices={client.invoices} />
                   </TableCell>
                 </TableRow>
               ))}
