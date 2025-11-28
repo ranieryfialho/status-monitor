@@ -53,7 +53,7 @@ export function GlobalStatusCard({ sites }: GlobalStatusCardProps) {
     checkAllSites();
 
     // 2. Atualiza a cada 10 segundos (Real-time "vivo")
-    const interval = setInterval(checkAllSites, 10000); 
+    const interval = setInterval(checkAllSites, 60000); 
     
     return () => {
       isMounted = false;
