@@ -10,47 +10,48 @@ import { AddSiteDialog } from "@/components/add-site-dialog"
 import { CreateInvoiceDialog } from "@/components/create-invoice-dialog"
 import { ManageInvoicesDialog } from "@/components/manage-invoices-dialog"
 import { deleteClientAction } from "@/app/actions/client"
-import { MoreHorizontal, Trash, LayoutDashboard, Plus, DollarSign, Receipt } from "lucide-react"
+import { MoreHorizontal, Trash, LayoutDashboard, Plus, DollarSign, Receipt, Share2, Check } from "lucide-react"
 
 interface ClientActionsProps {
   clientSlug: string;
   clientId: string;
+  accessCode: string; 
   invoices: any[];
 }
 
-export function ClientActions({ clientSlug, clientId, invoices }: ClientActionsProps) {
-  // Estados para controlar os modais independentemente
+export function ClientActions({ clientSlug, clientId, accessCode, invoices }: ClientActionsProps) {
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false)
   const [isAddSiteOpen, setIsAddSiteOpen] = useState(false)
-  const [isManageInvoicesOpen, setIsManageInvoicesOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const pendingCount = invoices ? invoices.filter(i => i.status === 'PENDING').length : 0;
 
+  // Função para copiar o convite mágico
+  const handleCopyInvite = () => {
+    const baseUrl = window.location.origin;
+    const magicLink = `${baseUrl}/api/auth/invite?u=${clientSlug}&c=${accessCode}`;
+    
+    const message = `Olá! 👋\n\nAqui está o link de acesso direto ao seu *Painel de Monitoramento*.\n\nBasta clicar para entrar (não precisa de senha):\n${magicLink}\n\n⚠️ Por segurança, ao acessar, recomendo clicar em "Trocar Acesso" e definir sua própria senha.`;
+
+    navigator.clipboard.writeText(message);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   return (
     <>
-      {/* --- MODAIS (RENDERIZADOS FORA DO DROPDOWN PARA EVITAR LAG) --- */}
-      
-      {/* 1. Modal Nova Cobrança */}
       <CreateInvoiceDialog 
         clientId={clientId} 
         open={isInvoiceOpen} 
         onOpenChange={setIsInvoiceOpen} 
       />
 
-      {/* 2. Modal Adicionar Site */}
       <AddSiteDialog 
         clientSlug={clientSlug} 
         open={isAddSiteOpen} 
         onOpenChange={setIsAddSiteOpen} 
       />
 
-      {/* 3. Modal Gerenciar Faturas (Este já gerenciava bem, mas padronizamos) */}
-      {/* Nota: ManageInvoicesDialog ainda usa o padrão antigo de trigger interno, 
-          mas como ele não tem inputs complexos, não costuma travar. 
-          Se travar, podemos aplicar a mesma lógica nele. Por enquanto, mantemos via Dropdown.
-      */}
-
-      {/* --- MENU DROPDOWN --- */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted relative">
@@ -70,9 +71,14 @@ export function ClientActions({ clientSlug, clientId, invoices }: ClientActionsP
             </Link>
           </DropdownMenuItem>
 
+          {/* ITEM: COPIAR CONVITE */}
+          <DropdownMenuItem onClick={handleCopyInvite} className="cursor-pointer focus:bg-muted text-primary focus:text-primary">
+            {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
+            <span>{copied ? "Copiado!" : "Copiar Acesso Mágico"}</span>
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator className="bg-border" />
 
-          {/* ITEM: GERENCIAR FATURAS */}
           <div onSelect={(e) => e.preventDefault()}>
              <ManageInvoicesDialog invoices={invoices || []}>
                 <div className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-muted hover:text-accent-foreground cursor-pointer">
@@ -85,7 +91,6 @@ export function ClientActions({ clientSlug, clientId, invoices }: ClientActionsP
              </ManageInvoicesDialog>
           </div>
 
-          {/* ITEM: GERAR COBRANÇA (Apenas muda o estado para true) */}
           <DropdownMenuItem onSelect={() => setIsInvoiceOpen(true)} className="cursor-pointer text-green-600 focus:text-green-700 focus:bg-green-500/10">
              <DollarSign className="mr-2 h-4 w-4" />
              <span>Gerar Cobrança</span>
@@ -93,7 +98,6 @@ export function ClientActions({ clientSlug, clientId, invoices }: ClientActionsP
 
           <DropdownMenuSeparator className="bg-border" />
 
-          {/* ITEM: ADICIONAR SITE */}
           <DropdownMenuItem onSelect={() => setIsAddSiteOpen(true)} className="cursor-pointer focus:bg-muted">
              <Plus className="mr-2 h-4 w-4" />
              <span>Adicionar Site</span>
