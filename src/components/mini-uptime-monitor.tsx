@@ -66,7 +66,6 @@ export function MiniUptimeMonitor({ url, token }: MiniUptimeMonitorProps) {
   ];
 
   return (
-    // Removi o texto "Monitor / ON" e centralizei o container das barras
     <div className="flex items-center justify-center w-full h-full min-w-[120px]">
       <div className="flex items-end gap-[3px] h-6 w-full max-w-[140px] overflow-hidden">
         <TooltipProvider delayDuration={0}>

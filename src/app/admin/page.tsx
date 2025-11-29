@@ -7,7 +7,7 @@ import { deleteSiteAction } from "@/app/actions/client"
 import { AddClientDialog } from "@/components/add-client-dialog"
 import { ClientActions } from "./components/client-actions"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
-import { MiniUptimeMonitor } from "../../components/mini-uptime-monitor"
+import { MiniUptimeMonitor } from "@/components/mini-uptime-monitor"
 import { GlobalStatusCard } from "@/components/global-status-card"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,7 +16,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table"
 import { 
-  Activity, CheckCircle2, ExternalLink, Server, LogOut, Trash2
+  Activity, AlertCircle, CheckCircle2, LayoutDashboard, Server, LogOut, Trash2, Globe
 } from "lucide-react"
 
 export default async function AdminDashboard() {
@@ -42,7 +42,6 @@ export default async function AdminDashboard() {
   );
 
   const totalSitesCount = allSites.length;
-  // Calculamos apenas o total básico aqui, o status online/offline é responsabilidade do componente GlobalStatusCard em tempo real.
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300">
@@ -72,8 +71,6 @@ export default async function AdminDashboard() {
 
       {/* CARDS DE RESUMO */}
       <div className="grid gap-6 md:grid-cols-3 mb-8">
-        
-        {/* Card 1: Total */}
         <Card className="border-none shadow-lg bg-card rounded-[20px]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -89,7 +86,6 @@ export default async function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Card 2: Clientes Ativos */}
         <Card className="border-none shadow-lg bg-card rounded-[20px]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -105,9 +101,7 @@ export default async function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Card 3: MONITORAMENTO GLOBAL EM TEMPO REAL */}
         <GlobalStatusCard sites={allSites} />
-
       </div>
 
       {/* LISTA DE CLIENTES */}
@@ -125,7 +119,8 @@ export default async function AdminDashboard() {
             <TableHeader>
               <TableRow className="hover:bg-transparent border-border/50">
                 <TableHead className="pl-6 text-muted-foreground w-[200px]">Gestor / Cliente</TableHead>
-                <TableHead className="text-muted-foreground w-[220px]">Sites Vinculados</TableHead>
+                {/* Aumentei a largura da coluna para caber nomes longos e botões */}
+                <TableHead className="text-muted-foreground w-[350px]">Sites Vinculados</TableHead>
                 <TableHead className="text-muted-foreground text-center">Monitoramento (Uptime)</TableHead>
                 <TableHead className="text-muted-foreground">Status Geral</TableHead>
                 <TableHead className="text-muted-foreground text-right pr-6">Ações</TableHead>
@@ -141,28 +136,53 @@ export default async function AdminDashboard() {
                     </div>
                   </TableCell>
                   
-                  {/* Célula de Sites + Mini Monitor */}
+                  {/* Célula Combinada (Sites + Monitor) */}
                   <TableCell className="py-4" colSpan={2}>
                     <div className="flex flex-col gap-3">
                       {client.sites.map((site) => (
                         <div key={site.id} className="flex items-center w-full group border-b last:border-0 border-border/40 pb-2 last:pb-0">
-                            <div className="flex items-center gap-2 w-[220px] shrink-0">
-                              <a 
-                                href={site.url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors truncate"
-                                title={site.url}
-                              >
-                                <ExternalLink className="h-3.5 w-3.5 opacity-50 shrink-0" />
-                                <span className="truncate">{site.name}</span>
-                              </a>
-                              <form action={deleteSiteAction}>
-                                  <input type="hidden" name="siteId" value={site.id} />
-                                  <button type="submit" className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 cursor-pointer ml-1">
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                  </button>
-                              </form>
+                            
+                            {/* --- ÁREA DO SITE (NOME COMPLETO + BOTÕES) --- */}
+                            <div className="flex items-center justify-between w-[350px] shrink-0 pr-4 gap-2">
+                              
+                              {/* Nome do Site (Sem Truncate) */}
+                              <span className="text-sm font-medium text-foreground" title={site.name}>
+                                {site.name}
+                              </span>
+
+                              {/* Grupo de Botões */}
+                              <div className="flex items-center gap-1 shrink-0">
+                                
+                                {/* Botão 1: Ir para o Site */}
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary" asChild title="Visitar Site">
+                                  <a href={site.url} target="_blank" rel="noopener noreferrer">
+                                    <Globe className="h-3.5 w-3.5" />
+                                  </a>
+                                </Button>
+
+                                {/* Botão 2: Ir para WP-ADMIN */}
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-blue-500" asChild title="Acessar WP Admin">
+                                  <a 
+                                    href={`${site.url.replace(/\/$/, "")}/wp-admin`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                  >
+                                    <LayoutDashboard className="h-3.5 w-3.5" />
+                                  </a>
+                                </Button>
+
+                                {/* Botão 3: Deletar */}
+                                <form action={deleteSiteAction}>
+                                    <input type="hidden" name="siteId" value={site.id} />
+                                    <button 
+                                      type="submit" 
+                                      className="h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-red-500 cursor-pointer" 
+                                      title="Remover este site"
+                                    >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                </form>
+                              </div>
                             </div>
                             
                             {/* Mini Monitor Centralizado */}
@@ -181,7 +201,7 @@ export default async function AdminDashboard() {
                   </TableCell>
                   
                   <TableCell className="text-right pr-6 align-top py-4">
-                    <ClientActions clientSlug={client.slug} clientId={client.id} invoices={client.invoices} />
+                    <ClientActions clientSlug={client.slug} clientId={client.id} accessCode={client.accessCode} invoices={client.invoices} />
                   </TableCell>
                 </TableRow>
               ))}

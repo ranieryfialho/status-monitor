@@ -3,11 +3,11 @@ import { notFound, redirect } from "next/navigation"
 import prisma from "@/lib/prisma"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Globe, ArrowRight, LogOut, Server } from "lucide-react"
+import { Globe, ArrowRight, LogOut, Server, LayoutDashboard } from "lucide-react" // <--- Adicionado LayoutDashboard
 import { logoutAction } from "@/app/actions/auth"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
-import { MiniUptimeMonitor } from "@/components/mini-uptime-monitor"
-import { GlobalStatusCard } from "@/components/global-status-card" // <--- 1. IMPORT NOVO
+import { MiniUptimeMonitor } from "@/components/mini-uptime-monitor" 
+import { GlobalStatusCard } from "@/components/global-status-card"
 
 export default async function ClientSitesPage({
   params,
@@ -25,12 +25,10 @@ export default async function ClientSitesPage({
     notFound()
   }
 
-  // Se tiver apenas 1 site, redireciona direto (mantendo a lógica original)
   if (clientUser.sites.length === 1) {
      redirect(`/dashboard/${clientSlug}/${clientUser.sites[0].id}`)
   }
 
-  // --- 2. PREPARAR DADOS PARA O MONITOR GLOBAL DO CLIENTE ---
   const clientSitesForMonitor = clientUser.sites.map(s => ({
     url: s.url,
     apiToken: s.apiToken
@@ -64,10 +62,7 @@ export default async function ClientSitesPage({
         </div>
       </div>
 
-      {/* --- 3. NOVA SEÇÃO DE RESUMO (IGUAL AO ADMIN) --- */}
       <div className="grid gap-6 md:grid-cols-2 mb-8">
-        
-        {/* Card de Total de Sites do Cliente */}
         <Card className="border-none shadow-lg bg-card rounded-[20px]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -83,45 +78,69 @@ export default async function ClientSitesPage({
           </CardContent>
         </Card>
 
-        {/* O MONITOR GLOBAL (Filtrado apenas para este cliente) */}
         <GlobalStatusCard sites={clientSitesForMonitor} />
-
       </div>
 
       <h3 className="text-lg font-bold text-foreground mb-4">Sites Individuais</h3>
 
-      {/* Grid de Cards Individuais */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {clientUser.sites.map((site) => (
-          <Link key={site.id} href={`/dashboard/${clientSlug}/${site.id}`} className="group">
-            <Card className="h-full border-none shadow-lg bg-card rounded-[20px] transition-all hover:shadow-xl hover:scale-[1.02] hover:bg-card/90 cursor-pointer border border-transparent hover:border-primary/20 flex flex-col">
+          // Removemos o Link wrapper geral para evitar conflito de clique nos botões
+          <Card key={site.id} className="h-full border-none shadow-lg bg-card rounded-[20px] transition-all hover:shadow-xl border border-transparent hover:border-primary/20 flex flex-col">
               
-              <CardHeader className="pb-4">
-                <div className="flex justify-between items-start h-10">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <Globe className="h-5 w-5" />
+              <CardHeader className="pb-2">
+                <div className="flex justify-between items-start h-8 mb-2">
+                  {/* Ícone Decorativo */}
+                  <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                    <Globe className="h-4 w-4" />
                   </div>
 
+                  {/* Monitor Uptime */}
                   <div className="w-[120px] h-full flex items-center justify-end">
                     <MiniUptimeMonitor url={site.url} token={site.apiToken} />
                   </div>
                 </div>
                 
-                <CardTitle className="text-xl font-bold text-foreground group-hover:text-primary transition-colors mt-4">
+                <CardTitle className="text-lg font-bold text-foreground truncate" title={site.name}>
                   {site.name}
                 </CardTitle>
-              </CardHeader>
-
-              <CardContent className="mt-auto">
-                <p className="text-sm text-muted-foreground truncate mb-4">
+                <p className="text-xs text-muted-foreground truncate">
                   {site.url}
                 </p>
-                <div className="flex items-center text-sm font-medium text-primary">
-                  Ver Dashboard <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </CardHeader>
+
+              <CardContent className="mt-auto pt-4">
+                <div className="flex items-center justify-between border-t border-border/50 pt-4 mt-2">
+                  
+                  {/* Link Principal: Ver Dashboard Interno */}
+                  <Link 
+                    href={`/dashboard/${clientSlug}/${site.id}`} 
+                    className="flex items-center text-sm font-medium text-primary hover:underline group"
+                  >
+                    Ver Dashboard <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
+                  </Link>
+
+                  {/* Botões de Ação Rápida (Estilo Admin) */}
+                  <div className="flex items-center gap-1">
+                    
+                    {/* Botão Site */}
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" asChild title="Visitar Site">
+                      <a href={site.url} target="_blank" rel="noopener noreferrer">
+                        <Globe className="h-4 w-4" />
+                      </a>
+                    </Button>
+
+                    {/* Botão Admin */}
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10" asChild title="Acessar WP Admin">
+                      <a href={`${site.url.replace(/\/$/, "")}/wp-admin`} target="_blank" rel="noopener noreferrer">
+                        <LayoutDashboard className="h-4 w-4" />
+                      </a>
+                    </Button>
+
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          </Link>
         ))}
       </div>
     </div>
