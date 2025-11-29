@@ -10,6 +10,13 @@ export interface InstalledPlugin {
   autor: string;
 }
 
+export interface BackupItem {
+  data: string;
+  tamanho: string;
+  tipo: string;
+  link?: string; // Opcional, pois pode não ter link
+}
+
 export interface WPMonitorResponse {
   sistema: {
     nome_site: string;
@@ -26,5 +33,6 @@ export interface WPMonitorResponse {
   logs_recentes: UpdateLog[];
   backup: {
     ativo: boolean;
+    historico?: BackupItem[];
   };
 }

@@ -10,7 +10,7 @@ import { UpdatesTable } from "./updates-table"
 import { UptimeMonitor } from "./uptime-monitor"
 import { InstalledPlugins } from "./installed-plugins"
 import { WPMonitorResponse } from "@/types/api"
-import { Download, LogOut } from "lucide-react"
+import { Download, LogOut, Database, HardDrive } from "lucide-react"
 
 interface DashboardData extends WPMonitorResponse {
   status: "online" | "offline";
@@ -49,7 +49,6 @@ const item = {
 export function DashboardView({ clientName, data, siteCredentials }: DashboardViewProps) {
   const componentRef = useRef<HTMLDivElement>(null)
   
-  // Status inicial vindo do servidor (Snapshot do momento do carregamento)
   const isInitialOffline = data.status === "offline"
 
   const handlePrint = useReactToPrint({
@@ -63,7 +62,7 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
       className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300"
     >
       
-      {/* CABEÇALHO (Visível apenas na tela) */}
+      {/* CABEÇALHO (Tela) */}
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
         <div className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-muted-foreground">
@@ -80,9 +79,7 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
           </div>
         </div>
 
-        {/* Grupo de Botões (Logout + Download) */}
         <div className="flex items-center gap-2">
-          
           <form action={logoutAction}>
             <Button 
               variant="outline" 
@@ -107,10 +104,9 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
       {/* ÁREA IMPRESSA */}
       <div ref={componentRef} className="print-container">
         
-        {/* Padding interno para o papel */}
         <div className="print:p-6">
           
-          {/* Cabeçalho do PDF */}
+          {/* Cabeçalho PDF */}
           <div className="hidden print:flex flex-col mb-8 border-b border-gray-700 pb-4">
             <h1 className="text-3xl font-bold text-white mb-1">Relatório Mensal</h1>
             <h2 className="text-xl text-gray-300">{clientName}</h2>
@@ -123,10 +119,10 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
             animate="show"
             className="space-y-6"
           >
-            {/* GRID PRINCIPAL (Cards de Status e Infra) */}
+            {/* GRID PRINCIPAL */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               
-              {/* CARD 1: STATUS + TEMA */}
+              {/* CARD 1: AMBIENTE */}
               <motion.div variants={item} className="break-inside-avoid">
                 <Card className={`print-card p-6 border-none shadow-lg bg-card rounded-[20px] transition-colors duration-300 ${isInitialOffline ? 'bg-red-950/30 border border-red-900/50' : 'bg-card'}`}>
                   <div className="flex flex-col gap-1">
@@ -142,7 +138,6 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
                         {isInitialOffline ? 'Offline' : 'Online'}
                       </span>
                     </div>
-                    {/* Exibe o Tema e WP */}
                     <div className="flex flex-col gap-1 mt-2">
                         <span className="text-xs text-muted-foreground print-text-muted">
                           WP: <span className="text-primary font-semibold print-text-primary">{data.sistema?.wp_version}</span>
@@ -155,7 +150,7 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
                 </Card>
               </motion.div>
 
-              {/* CARD 2: INFRAESTRUTURA (IP + PHP) */}
+              {/* CARD 2: INFRAESTRUTURA */}
               <motion.div variants={item} className="break-inside-avoid">
                 <Card className="print-card p-6 border-none shadow-lg bg-card rounded-[20px]">
                   <div className="flex flex-col gap-1">
@@ -175,47 +170,93 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
                 </Card>
               </motion.div>
               
-              {/* CARD 3: BACKUP */}
+              {/* CARD 3: BACKUP (Com Botão e Tratamento N/A) */}
               <motion.div variants={item} className="break-inside-avoid">
-                <Card className="print-card p-6 border-none shadow-lg bg-card rounded-[20px]">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium text-muted-foreground print-text-muted">Sistema de Backup</span>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className={`h-2 w-2 rounded-full ${data.backup?.ativo ? 'bg-green-500' : 'bg-red-500'} print:bg-green-500`} />
-                      <h3 className="text-2xl font-bold text-foreground print-text-white">
-                        {data.backup?.ativo ? "Ativo" : "Inativo"}
-                      </h3>
+                <Card className="print-card p-6 border-none shadow-lg bg-card rounded-[20px] h-full flex flex-col">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                      <Database className="h-4 w-4" />
                     </div>
-                    <span className="text-xs text-muted-foreground mt-2 print-text-muted">
-                      Monitoramento via Plugin
-                    </span>
+                    <span className="text-sm font-medium text-muted-foreground print-text-muted">Sistema de Backup</span>
                   </div>
+
+                  {data.backup?.historico && data.backup.historico.length > 0 ? (
+                    <div className="flex flex-col gap-2 flex-1">
+                      {data.backup.historico.map((bkp, i) => (
+                        <div key={i} className="flex items-center justify-between p-2.5 bg-muted/30 rounded-lg border border-border/30 hover:bg-muted/50 transition-colors">
+                          <div className="flex flex-col gap-0.5">
+                              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                  <div className={`h-1.5 w-1.5 rounded-full ${i === 0 ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/50'}`}></div>
+                                  {new Date(bkp.data).toLocaleDateString('pt-BR')}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground pl-3">
+                                  {new Date(bkp.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} • {bkp.tipo}
+                              </span>
+                          </div>
+                          
+                          <div className="text-right flex items-center gap-2">
+                              {/* Badge de Tamanho (Com tratamento N/A) */}
+                              <span className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded flex items-center gap-1 border ${
+                                  bkp.tamanho === 'N/A' 
+                                    ? 'text-muted-foreground bg-muted/50 border-transparent' 
+                                    : 'text-foreground bg-background border-border'
+                              }`}>
+                                  <HardDrive className="h-3 w-3 opacity-50" />
+                                  {bkp.tamanho === 'N/A' ? 'Não inf.' : bkp.tamanho}
+                              </span>
+
+                              {/* Botão de Download */}
+                              {bkp.link && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-6 w-6 text-primary hover:bg-primary/10 hover:text-primary" 
+                                  asChild
+                                  title="Baixar Backup"
+                                >
+                                  <a href={bkp.link} target="_blank" rel="noopener noreferrer">
+                                    <Download className="h-3.5 w-3.5" />
+                                  </a>
+                                </Button>
+                              )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 mt-2 h-full justify-center">
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2 w-2 rounded-full ${data.backup?.ativo ? 'bg-green-500' : 'bg-red-500'} print:bg-green-500`} />
+                        <h3 className="text-2xl font-bold text-foreground print-text-white">
+                          {data.backup?.ativo ? "Ativo" : "Inativo"}
+                        </h3>
+                      </div>
+                      <span className="text-xs text-muted-foreground print-text-muted">
+                        Monitoramento via Plugin
+                      </span>
+                    </div>
+                  )}
                 </Card>
               </motion.div>
 
             </div>
 
-            {/* GRID SECUNDÁRIO (3 Colunas) */}
+            {/* GRID SECUNDÁRIO */}
             <div className="grid gap-6 md:grid-cols-1 xl:grid-cols-3">
-              
-              {/* COLUNA 1: Plugins Instalados */}
               <motion.div variants={item} className="xl:col-span-1 break-inside-avoid">
                 <div className="print-card rounded-[20px] overflow-hidden p-1 h-full">
                   <InstalledPlugins plugins={data.plugins_instalados || []} />
                 </div>
               </motion.div>
 
-              {/* COLUNA 2: Histórico de Atualizações */}
               <motion.div variants={item} className="xl:col-span-1 break-inside-avoid">
                 <div className="print-card rounded-[20px] overflow-hidden p-1 h-full">
                   <UpdatesTable logs={data.logs_recentes || []} />
                 </div>
               </motion.div>
 
-              {/* COLUNA 3: Monitor Real-Time */}
               <motion.div variants={item} className="xl:col-span-1 min-h-[300px] break-inside-avoid print-chart-container">
                 <div className="print-card h-full w-full rounded-[20px] p-1">
-                  {/* MONITOR EM TEMPO REAL: Faz a verificação sozinho a cada 1s */}
                   <UptimeMonitor 
                     initialStatus={data.status} 
                     siteUrl={siteCredentials.url}
@@ -223,7 +264,6 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
                   />
                 </div>
               </motion.div>
-
             </div>
           </motion.div>
         </div>
@@ -233,7 +273,6 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
         @media print {
           @page { margin: 15mm; size: auto; }
           .no-print { display: none !important; }
-          
           :root {
             --background: 222 47% 11% !important; 
             --foreground: 210 40% 98% !important; 
@@ -243,57 +282,18 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
             --border: 217 33% 25% !important;
             --primary: 245 100% 65% !important;
           }
-
-          * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-
-          body {
-            background-color: hsl(222 47% 11%) !important;
-            color: hsl(210 40% 98%) !important;
-          }
-
-          .print-chart-container {
-            display: block !important;
-            height: 350px !important;
-            page-break-inside: avoid !important;
-          }
-          
-          .break-inside-avoid {
-            break-inside: avoid !important;
-            page-break-inside: avoid !important;
-            margin-bottom: 24px;
-          }
-
-          .print-card, .card {
-            background-color: #111C44 !important; 
-            border: 1px solid #2B3674 !important;
-            color: white !important;
-            box-shadow: none !important;
-          }
-
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          body { background-color: hsl(222 47% 11%) !important; color: hsl(210 40% 98%) !important; }
+          .print-chart-container { display: block !important; height: 350px !important; page-break-inside: avoid !important; }
+          .break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; margin-bottom: 24px; }
+          .print-card, .card { background-color: #111C44 !important; border: 1px solid #2B3674 !important; color: white !important; box-shadow: none !important; }
           h1, h2, h3, h4, p, div, span, strong { color: white !important; }
           .print-text-muted, .text-muted-foreground { color: #A3AED0 !important; }
           .print-text-primary, .text-primary, a { color: #7551FF !important; }
-
-          table, thead, tbody, tr, td, th {
-            background-color: #111C44 !important;
-            color: white !important;
-            border-color: #2B3674 !important;
-          }
-          tr:nth-child(even), tr:nth-child(odd) {
-             background-color: #111C44 !important;
-          }
-          .badge {
-             background-color: #0B1437 !important;
-             color: white !important;
-             border: 1px solid #2B3674;
-          }
-          .shadow-lg {
-            box-shadow: none !important;
-            border: 1px solid hsl(217 33% 25%) !important;
-          }
+          table, thead, tbody, tr, td, th { background-color: #111C44 !important; color: white !important; border-color: #2B3674 !important; }
+          tr:nth-child(even), tr:nth-child(odd) { background-color: #111C44 !important; }
+          .badge { background-color: #0B1437 !important; color: white !important; border: 1px solid #2B3674; }
+          .shadow-lg { box-shadow: none !important; border: 1px solid hsl(217 33% 25%) !important; }
         }
       `}</style>
     </div>
