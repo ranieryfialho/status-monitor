@@ -17,7 +17,6 @@ function processLogsToChart(logs: UpdateLog[]) {
     const d = new Date();
     d.setDate(today.getDate() - i);
     
-    // Formata data para YYYY-MM-DD (comparação) e DD/MM (exibição)
     const dateKey = d.toISOString().split('T')[0]; 
     const displayDate = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
@@ -32,14 +31,12 @@ function processLogsToChart(logs: UpdateLog[]) {
   return chartData;
 }
 
-// Interface estendida para o Dashboard
 interface DashboardData extends WPMonitorResponse {
   status: "online" | "offline";
   lastCheck: string;
   analytics?: { name: string; atual: number; anterior: number }[];
 }
 
-// Dados de Fallback (Vazio se der erro)
 const MOCK_DATA: DashboardData = {
   status: "offline",
   lastCheck: "-",
@@ -61,13 +58,12 @@ export default async function DashboardPage({
 }) {
   const { client: clientSlug, site: siteId } = await params
   
-  // 1. Busca o cliente, seus sites E AS FATURAS PENDENTES no Banco de Dados
   const clientUser = await prisma.client.findUnique({
     where: { slug: clientSlug },
     include: { 
         sites: true,
         invoices: {
-            where: { status: 'PENDING' }, // Filtra apenas o que precisa pagar
+            where: { status: 'PENDING' },
             orderBy: { createdAt: 'desc' }
         }
     }
@@ -75,18 +71,14 @@ export default async function DashboardPage({
   
   if (!clientUser) notFound()
 
-  // 2. Encontra o site específico pelo ID
   const siteConfig = clientUser.sites.find(s => s.id === siteId)
   if (!siteConfig) notFound()
 
-  // 3. Tenta buscar os dados reais do WordPress (Server Side - Carga Inicial)
   const apiData = await fetchSiteData(clientSlug, siteId)
   
   let finalData: DashboardData;
 
   if (!apiData) {
-    // CENÁRIO DE ERRO (SITE OFFLINE NO INÍCIO)
-    // Usamos o Mock mas mantemos o nome/url corretos para o usuário identificar
     finalData = {
       ...MOCK_DATA,
       status: "offline",
@@ -94,7 +86,6 @@ export default async function DashboardPage({
       sistema: { ...MOCK_DATA.sistema, nome_site: siteConfig.name, url: siteConfig.url }
     }
   } else {
-    // CENÁRIO DE SUCESSO
     const realChartData = processLogsToChart(apiData.logs_recentes || []);
     
     finalData = {
@@ -107,7 +98,7 @@ export default async function DashboardPage({
 
   return (
     <div>
-        {/* Botão de Voltar (Aparece apenas se o cliente tiver mais de 1 site) */}
+        {/* Botão Voltar (Só aparece se tiver > 1 site) */}
         {clientUser.sites.length > 1 && (
             <div className="p-4 md:p-8 pb-0">
                 <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
@@ -119,13 +110,13 @@ export default async function DashboardPage({
             </div>
         )}
         
-        {/* ÁREA DE FATURAS (Aparece no topo se tiver conta pra pagar) */}
         <div className="px-4 md:px-8 pt-6 -mb-6">
             <InvoiceList invoices={clientUser.invoices} />
         </div>
 
-        {/* Dashboard Principal */}
+        {/* Passamos o clientSlug para o componente visual saber quem está logado */}
         <DashboardView 
+            clientSlug={clientSlug} 
             clientName={siteConfig.name} 
             data={finalData} 
             siteCredentials={{

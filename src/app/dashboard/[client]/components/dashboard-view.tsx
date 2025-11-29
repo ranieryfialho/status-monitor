@@ -11,6 +11,7 @@ import { UptimeMonitor } from "./uptime-monitor"
 import { InstalledPlugins } from "./installed-plugins"
 import { WPMonitorResponse } from "@/types/api"
 import { Download, LogOut, Database, HardDrive } from "lucide-react"
+import { ChangePasswordDialog } from "@/components/change-password-dialog" // <--- IMPORTADO
 
 interface DashboardData extends WPMonitorResponse {
   status: "online" | "offline";
@@ -23,6 +24,7 @@ interface DashboardData extends WPMonitorResponse {
 }
 
 interface DashboardViewProps {
+  clientSlug: string; // <--- NOVA PROP
   clientName: string;
   data: DashboardData;
   siteCredentials: {
@@ -46,7 +48,7 @@ const item = {
   show: { y: 0, opacity: 1 }
 }
 
-export function DashboardView({ clientName, data, siteCredentials }: DashboardViewProps) {
+export function DashboardView({ clientSlug, clientName, data, siteCredentials }: DashboardViewProps) {
   const componentRef = useRef<HTMLDivElement>(null)
   
   const isInitialOffline = data.status === "offline"
@@ -62,7 +64,7 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
       className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300"
     >
       
-      {/* CABEÇALHO (Tela) */}
+      {/* CABEÇALHO (Visível apenas na tela) */}
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
         <div className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-muted-foreground">
@@ -79,7 +81,12 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
           </div>
         </div>
 
+        {/* Grupo de Botões (Trocar Senha + Logout + Download) */}
         <div className="flex items-center gap-2">
+          
+          {/* BOTÃO DE TROCAR SENHA ADICIONADO AQUI */}
+          <ChangePasswordDialog type="client" identifier={clientSlug} />
+
           <form action={logoutAction}>
             <Button 
               variant="outline" 
@@ -106,7 +113,7 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
         
         <div className="print:p-6">
           
-          {/* Cabeçalho PDF */}
+          {/* Cabeçalho do PDF */}
           <div className="hidden print:flex flex-col mb-8 border-b border-gray-700 pb-4">
             <h1 className="text-3xl font-bold text-white mb-1">Relatório Mensal</h1>
             <h2 className="text-xl text-gray-300">{clientName}</h2>
@@ -122,7 +129,7 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
             {/* GRID PRINCIPAL */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               
-              {/* CARD 1: AMBIENTE */}
+              {/* CARD 1: STATUS + TEMA */}
               <motion.div variants={item} className="break-inside-avoid">
                 <Card className={`print-card p-6 border-none shadow-lg bg-card rounded-[20px] transition-colors duration-300 ${isInitialOffline ? 'bg-red-950/30 border border-red-900/50' : 'bg-card'}`}>
                   <div className="flex flex-col gap-1">
@@ -170,7 +177,7 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
                 </Card>
               </motion.div>
               
-              {/* CARD 3: BACKUP (Com Botão e Tratamento N/A) */}
+              {/* CARD 3: BACKUP */}
               <motion.div variants={item} className="break-inside-avoid">
                 <Card className="print-card p-6 border-none shadow-lg bg-card rounded-[20px] h-full flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
@@ -195,7 +202,6 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
                           </div>
                           
                           <div className="text-right flex items-center gap-2">
-                              {/* Badge de Tamanho (Com tratamento N/A) */}
                               <span className={`text-[10px] font-mono font-medium px-1.5 py-0.5 rounded flex items-center gap-1 border ${
                                   bkp.tamanho === 'N/A' 
                                     ? 'text-muted-foreground bg-muted/50 border-transparent' 
@@ -205,7 +211,6 @@ export function DashboardView({ clientName, data, siteCredentials }: DashboardVi
                                   {bkp.tamanho === 'N/A' ? 'Não inf.' : bkp.tamanho}
                               </span>
 
-                              {/* Botão de Download */}
                               {bkp.link && (
                                 <Button 
                                   variant="ghost" 

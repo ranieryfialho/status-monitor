@@ -74,7 +74,7 @@ export function ClientActions({ clientSlug, clientId, accessCode, invoices }: Cl
           {/* ITEM: COPIAR CONVITE */}
           <DropdownMenuItem onClick={handleCopyInvite} className="cursor-pointer focus:bg-muted text-primary focus:text-primary">
             {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
-            <span>{copied ? "Copiado!" : "Copiar Acesso Mágico"}</span>
+            <span>{copied ? "Copiado!" : "Copiar Link de Convite"}</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="bg-border" />
