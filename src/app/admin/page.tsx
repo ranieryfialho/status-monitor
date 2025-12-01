@@ -36,7 +36,6 @@ export default async function AdminDashboard() {
     orderBy: { createdAt: 'desc' }
   })
 
-  // Prepara a lista de sites para o monitor global
   const allSites = clients.flatMap(client => 
     client.sites.map(site => ({ url: site.url, apiToken: site.apiToken }))
   );
@@ -69,7 +68,6 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* CARDS DE RESUMO */}
       <div className="grid gap-6 md:grid-cols-3 mb-8">
         <Card className="border-none shadow-lg bg-card rounded-[20px]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -104,7 +102,6 @@ export default async function AdminDashboard() {
         <GlobalStatusCard sites={allSites} />
       </div>
 
-      {/* LISTA DE CLIENTES */}
       <Card className="border-none shadow-lg bg-card rounded-[20px] overflow-hidden">
         <div className="p-6 border-b border-border/50">
           <h3 className="text-lg font-bold text-foreground">Monitoramento em Tempo Real</h3>
@@ -119,7 +116,6 @@ export default async function AdminDashboard() {
             <TableHeader>
               <TableRow className="hover:bg-transparent border-border/50">
                 <TableHead className="pl-6 text-muted-foreground w-[200px]">Gestor / Cliente</TableHead>
-                {/* Aumentei a largura da coluna para caber nomes longos e botões */}
                 <TableHead className="text-muted-foreground w-[350px]">Sites Vinculados</TableHead>
                 <TableHead className="text-muted-foreground text-center">Monitoramento (Uptime)</TableHead>
                 <TableHead className="text-muted-foreground">Status Geral</TableHead>
@@ -136,31 +132,25 @@ export default async function AdminDashboard() {
                     </div>
                   </TableCell>
                   
-                  {/* Célula Combinada (Sites + Monitor) */}
                   <TableCell className="py-4" colSpan={2}>
                     <div className="flex flex-col gap-3">
                       {client.sites.map((site) => (
                         <div key={site.id} className="flex items-center w-full group border-b last:border-0 border-border/40 pb-2 last:pb-0">
                             
-                            {/* --- ÁREA DO SITE (NOME COMPLETO + BOTÕES) --- */}
                             <div className="flex items-center justify-between w-[350px] shrink-0 pr-4 gap-2">
                               
-                              {/* Nome do Site (Sem Truncate) */}
                               <span className="text-sm font-medium text-foreground" title={site.name}>
                                 {site.name}
                               </span>
 
-                              {/* Grupo de Botões */}
                               <div className="flex items-center gap-1 shrink-0">
                                 
-                                {/* Botão 1: Ir para o Site */}
                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-primary" asChild title="Visitar Site">
                                   <a href={site.url} target="_blank" rel="noopener noreferrer">
                                     <Globe className="h-3.5 w-3.5" />
                                   </a>
                                 </Button>
 
-                                {/* Botão 2: Ir para WP-ADMIN */}
                                 <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-blue-500" asChild title="Acessar WP Admin">
                                   <a 
                                     href={`${site.url.replace(/\/$/, "")}/wp-admin`} 
@@ -171,7 +161,6 @@ export default async function AdminDashboard() {
                                   </a>
                                 </Button>
 
-                                {/* Botão 3: Deletar */}
                                 <form action={deleteSiteAction}>
                                     <input type="hidden" name="siteId" value={site.id} />
                                     <button 
@@ -185,7 +174,6 @@ export default async function AdminDashboard() {
                               </div>
                             </div>
                             
-                            {/* Mini Monitor Centralizado */}
                             <div className="flex-1 flex justify-center px-4">
                                 <MiniUptimeMonitor url={site.url} token={site.apiToken} />
                             </div>
@@ -201,7 +189,13 @@ export default async function AdminDashboard() {
                   </TableCell>
                   
                   <TableCell className="text-right pr-6 align-top py-4">
-                    <ClientActions clientSlug={client.slug} clientId={client.id} accessCode={client.accessCode} invoices={client.invoices} />
+                    <ClientActions 
+                      clientSlug={client.slug} 
+                      clientId={client.id} 
+                      clientName={client.name}
+                      accessCode={client.accessCode} 
+                      invoices={client.invoices} 
+                    />
                   </TableCell>
                 </TableRow>
               ))}

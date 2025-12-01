@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
+import { useReactToPrint } from "react-to-print"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,29 +11,68 @@ import { AddSiteDialog } from "@/components/add-site-dialog"
 import { CreateInvoiceDialog } from "@/components/create-invoice-dialog"
 import { ManageInvoicesDialog } from "@/components/manage-invoices-dialog"
 import { deleteClientAction } from "@/app/actions/client"
-import { MoreHorizontal, Trash, LayoutDashboard, Plus, DollarSign, Receipt, Share2, Check } from "lucide-react"
+import { getClientReportDataAction } from "@/app/actions/report" 
+import { ReportPdf } from "@/components/report-pdf"
+import { MoreHorizontal, Trash, LayoutDashboard, Plus, DollarSign, Receipt, Share2, Check, FileText, Loader2 } from "lucide-react"
 
 interface ClientActionsProps {
   clientSlug: string;
   clientId: string;
+  clientName: string; 
   accessCode: string; 
   invoices: any[];
 }
 
-export function ClientActions({ clientSlug, clientId, accessCode, invoices }: ClientActionsProps) {
+const printPageStyle = `
+  @page { size: A4 portrait; margin: 0 !important; }
+  @media print {
+    html, body { margin: 0 !important; padding: 0 !important; background-color: #0B1437 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+`;
+
+export function ClientActions({ clientSlug, clientId, clientName, accessCode, invoices }: ClientActionsProps) {
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false)
   const [isAddSiteOpen, setIsAddSiteOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const [reportData, setReportData] = useState<any[] | null>(null) // Array agora
+  const printRef = useRef<HTMLDivElement>(null)
 
   const pendingCount = invoices ? invoices.filter(i => i.status === 'PENDING').length : 0;
 
-  // Função para copiar o convite mágico
+  const handlePrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: `Relatorio-Completo-${clientName.replace(/\s+/g, '-')}`,
+    pageStyle: printPageStyle,
+  })
+
+  const generateReport = async () => {
+    setIsGeneratingPdf(true)
+    try {
+      const data = await getClientReportDataAction(clientSlug)
+      
+      if (data && data.length > 0) {
+        setReportData(data)
+        setTimeout(() => {
+          handlePrint()
+          setIsGeneratingPdf(false)
+        }, 1000)
+      } else {
+        alert("Não foi possível gerar o relatório. Verifique se o cliente possui sites cadastrados.")
+        setIsGeneratingPdf(false)
+      }
+    } catch (error) {
+      console.error(error)
+      alert("Erro ao gerar relatório.")
+      setIsGeneratingPdf(false)
+    }
+  }
+
   const handleCopyInvite = () => {
     const baseUrl = window.location.origin;
     const magicLink = `${baseUrl}/api/auth/invite?u=${clientSlug}&c=${accessCode}`;
-    
     const message = `Olá! 👋\n\nAqui está o link de acesso direto ao seu *Painel de Monitoramento*.\n\nBasta clicar para entrar (não precisa de senha):\n${magicLink}\n\n⚠️ Por segurança, ao acessar, recomendo clicar em "Trocar Acesso" e definir sua própria senha.`;
-
     navigator.clipboard.writeText(message);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -40,24 +80,21 @@ export function ClientActions({ clientSlug, clientId, accessCode, invoices }: Cl
 
   return (
     <>
-      <CreateInvoiceDialog 
-        clientId={clientId} 
-        open={isInvoiceOpen} 
-        onOpenChange={setIsInvoiceOpen} 
-      />
+      <CreateInvoiceDialog clientId={clientId} open={isInvoiceOpen} onOpenChange={setIsInvoiceOpen} />
+      <AddSiteDialog clientSlug={clientSlug} open={isAddSiteOpen} onOpenChange={setIsAddSiteOpen} />
 
-      <AddSiteDialog 
-        clientSlug={clientSlug} 
-        open={isAddSiteOpen} 
-        onOpenChange={setIsAddSiteOpen} 
-      />
+      <div style={{ display: "none" }}>
+        <div ref={printRef}>
+          {reportData && <ReportPdf clientName={clientName} sitesData={reportData} />}
+        </div>
+      </div>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted relative">
             <span className="sr-only">Abrir menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-            {pendingCount > 0 && <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" />}
+            {isGeneratingPdf ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <MoreHorizontal className="h-4 w-4" />}
+            {!isGeneratingPdf && pendingCount > 0 && <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500 ring-2 ring-background" />}
           </Button>
         </DropdownMenuTrigger>
         
@@ -71,13 +108,21 @@ export function ClientActions({ clientSlug, clientId, accessCode, invoices }: Cl
             </Link>
           </DropdownMenuItem>
 
-          {/* ITEM: COPIAR CONVITE */}
           <DropdownMenuItem onClick={handleCopyInvite} className="cursor-pointer focus:bg-muted text-primary focus:text-primary">
             {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
             <span>{copied ? "Copiado!" : "Copiar Link de Convite"}</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="bg-border" />
+
+          <DropdownMenuItem 
+            onClick={(e) => { e.preventDefault(); generateReport(); }} 
+            disabled={isGeneratingPdf}
+            className="cursor-pointer focus:bg-muted text-blue-500 focus:text-blue-600"
+          >
+            {isGeneratingPdf ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+            <span>{isGeneratingPdf ? "Gerando Dossiê..." : "Gerar Relatório PDF"}</span>
+          </DropdownMenuItem>
 
           <div onSelect={(e) => e.preventDefault()}>
              <ManageInvoicesDialog invoices={invoices || []}>
