@@ -9,12 +9,10 @@ import {
   Server,
   Receipt,
   ArrowRight,
-  HardDrive,
-  Download,
 } from "lucide-react";
 import { WPMonitorResponse } from "@/types/api";
-import { QRCode } from "react-qr-code";
 
+// Tipos necessários
 interface SiteReportData extends WPMonitorResponse {
   id: string;
   name: string;
@@ -52,12 +50,14 @@ export function ReportPdf({
     headerBorder: "border-white/20",
   };
 
-  const pendingInvoices = invoices. filter((inv) => inv.status === "PENDING");
+  // Cálculos Financeiros
+  const pendingInvoices = invoices.filter((inv) => inv.status === "PENDING");
   const hasInvoices = pendingInvoices.length > 0;
-  const totalDue = pendingInvoices.reduce((acc, inv) => acc + inv. amount, 0);
+  const totalDue = pendingInvoices.reduce((acc, inv) => acc + inv.amount, 0);
 
   return (
     <div className={`print-container font-sans text-white`}>
+      {/* LOOP DOS SITES */}
       {sitesData.map((data, index) => {
         const isOnline = data.status === "online";
         const shouldBreak = index < sitesData.length - 1 || hasInvoices;
@@ -83,7 +83,7 @@ export function ReportPdf({
                   {data.name}
                 </h1>
                 <div className={`text-xs ${theme.textMuted} mt-1`}>
-                  {data.sistema?. url}
+                  {data.sistema?.url}
                 </div>
               </div>
               <div className="text-right">
@@ -93,7 +93,7 @@ export function ReportPdf({
                   Data de Emissão
                 </span>
                 <span className="text-xl font-bold text-white">
-                  {new Date(). toLocaleDateString("pt-BR")}
+                  {new Date().toLocaleDateString("pt-BR")}
                 </span>
               </div>
             </div>
@@ -109,11 +109,11 @@ export function ReportPdf({
                   >
                     Disponibilidade
                   </span>
-                  <Activity className={`h-3 w-3 ${theme. textMuted}`} />
+                  <Activity className={`h-3 w-3 ${theme.textMuted}`} />
                 </div>
                 <div className="text-lg font-bold flex items-center gap-2">
                   <div
-                    className={`h-2. 5 w-2.5 rounded-full ${
+                    className={`h-2.5 w-2.5 rounded-full ${
                       isOnline
                         ? "bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"
                         : "bg-red-500"
@@ -124,7 +124,7 @@ export function ReportPdf({
               </div>
 
               <div
-                className={`border ${theme.border} ${theme. cardBg} rounded-lg p-3 flex flex-col justify-center`}
+                className={`border ${theme.border} ${theme.cardBg} rounded-lg p-3 flex flex-col justify-center`}
               >
                 <div className="flex justify-between items-center mb-1">
                   <span
@@ -135,7 +135,7 @@ export function ReportPdf({
                   <ShieldCheck className={`h-3 w-3 ${theme.textMuted}`} />
                 </div>
                 <div className="text-lg font-bold flex items-center gap-2">
-                  {data.backup?. ativo ? (
+                  {data.backup?.ativo ? (
                     <>
                       <CheckCircle2 className="h-3 w-3 text-emerald-400" />{" "}
                       Ativo
@@ -153,14 +153,14 @@ export function ReportPdf({
               >
                 <div className="flex justify-between items-center mb-1">
                   <span
-                    className={`text-[10px] font-bold ${theme. textMuted} uppercase tracking-wider`}
+                    className={`text-[10px] font-bold ${theme.textMuted} uppercase tracking-wider`}
                   >
                     WordPress
                   </span>
-                  <LayoutTemplate className={`h-3 w-3 ${theme. textMuted}`} />
+                  <LayoutTemplate className={`h-3 w-3 ${theme.textMuted}`} />
                 </div>
                 <div className="text-lg font-bold">
-                  {data.sistema?. wp_version || "-"}
+                  {data.sistema?.wp_version || "-"}
                 </div>
               </div>
 
@@ -169,7 +169,7 @@ export function ReportPdf({
               >
                 <div className="flex justify-between items-center mb-1">
                   <span
-                    className={`text-[10px] font-bold ${theme. textMuted} uppercase tracking-wider`}
+                    className={`text-[10px] font-bold ${theme.textMuted} uppercase tracking-wider`}
                   >
                     Servidor
                   </span>
@@ -181,7 +181,7 @@ export function ReportPdf({
               </div>
             </div>
 
-            {/* CONTEÚDO */}
+            {/* CONTEÚDO PRINCIPAL */}
             <div className="flex-1">
               {/* ATUALIZAÇÕES */}
               <div className="mb-6 break-inside-avoid">
@@ -216,20 +216,20 @@ export function ReportPdf({
                         </th>
                       </tr>
                     </thead>
-                    <tbody className={`divide-y ${theme. divide}`}>
+                    <tbody className={`divide-y ${theme.divide}`}>
                       {data.logs_recentes && data.logs_recentes.length > 0 ? (
-                        data.logs_recentes. slice(0, 8).map((log, i) => (
+                        data.logs_recentes.slice(0, 8).map((log, i) => (
                           <tr key={i}>
                             <td className="py-2 px-3 font-medium text-white">
                               {log.plugin}
                             </td>
                             <td
-                              className={`py-2 px-3 ${theme. textMuted} font-mono text-[10px]`}
+                              className={`py-2 px-3 ${theme.textMuted} font-mono text-[10px]`}
                             >
                               {log.versao}
                             </td>
                             <td className={`py-2 px-3 ${theme.textMuted}`}>
-                              {new Date(log. data).toLocaleDateString("pt-BR")}
+                              {new Date(log.data).toLocaleDateString("pt-BR")}
                             </td>
                             <td className="py-2 px-3 text-right">
                               <span className="text-[9px] font-bold uppercase tracking-wide text-emerald-400">
@@ -244,7 +244,7 @@ export function ReportPdf({
                             colSpan={4}
                             className={`py-4 text-center ${theme.textMuted} italic`}
                           >
-                            Nenhuma atualização recente registrada. 
+                            Nenhuma atualização recente registrada.
                           </td>
                         </tr>
                       )}
@@ -254,7 +254,7 @@ export function ReportPdf({
               </div>
 
               {/* BACKUPS */}
-              {data.backup?. historico && data.backup.historico.length > 0 && (
+              {data.backup?.historico && data.backup.historico.length > 0 && (
                 <div className="mb-6 break-inside-avoid">
                   <h3 className="text-xs font-bold text-white border-l-4 border-blue-500 pl-3 mb-3 uppercase tracking-wider">
                     Backups Realizados
@@ -282,15 +282,15 @@ export function ReportPdf({
                           </th>
                         </tr>
                       </thead>
-                      <tbody className={`divide-y ${theme. divide}`}>
+                      <tbody className={`divide-y ${theme.divide}`}>
                         {data.backup.historico.slice(0, 5).map((bkp, i) => (
                           <tr key={i}>
                             <td className="py-2 px-3 font-medium text-white">
-                              {new Date(bkp. data).toLocaleDateString("pt-BR")}
+                              {new Date(bkp.data).toLocaleDateString("pt-BR")}
                               <span
                                 className={`text-[10px] ml-2 ${theme.textMuted}`}
                               >
-                                {new Date(bkp.data). toLocaleTimeString("pt-BR")}
+                                {new Date(bkp.data).toLocaleTimeString("pt-BR")}
                               </span>
                             </td>
                             <td className={`py-2 px-3 ${theme.textMuted}`}>
@@ -347,7 +347,7 @@ export function ReportPdf({
         );
       })}
 
-      {/* PÁGINA FINANCEIRA - APENAS QR CODE */}
+      {/* PÁGINA FINANCEIRA */}
       {hasInvoices && (
         <div
           className={`${theme.bg} ${theme.textMain} w-full min-h-[297mm] p-12 relative flex flex-col justify-center`}
@@ -362,56 +362,55 @@ export function ReportPdf({
                   Resumo Financeiro
                 </h2>
                 <p className="text-sm text-gray-400">
-                  Faturas em aberto referentes aos serviços prestados. 
+                  Faturas em aberto referentes aos serviços prestados.
                 </p>
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {pendingInvoices.map((inv) => (
                 <div
                   key={inv.id}
-                  className="flex flex-col gap-4 p-6 bg-black/20 rounded-xl border border-white/5"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-black/20 rounded-xl border border-white/5"
                 >
-                  {/* Informações da Fatura */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                    <div className="flex flex-col gap-1">
-                      <span className="font-medium text-white text-lg">
-                        {inv.description}
-                      </span>
-                      <span className="text-xs text-gray-500 font-mono uppercase tracking-wide">
-                        VENCIMENTO:{" "}
-                        {new Date(inv.createdAt).toLocaleDateString("pt-BR")}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-end gap-2 mt-4 sm:mt-0">
-                      <span className="text-2xl font-bold text-emerald-400 font-mono">
-                        {new Intl.NumberFormat("pt-BR", {
-                          style: "currency",
-                          currency: "BRL",
-                        }).format(inv.amount)}
-                      </span>
-                    </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="font-medium text-white text-lg">
+                      {inv.description}
+                    </span>
+                    <span className="text-xs text-gray-500 font-mono uppercase tracking-wide">
+                      Vencimento:{" "}
+                      {new Date(inv.createdAt).toLocaleDateString("pt-BR")}
+                    </span>
                   </div>
+                  <div className="flex flex-col items-end gap-2 mt-4 sm:mt-0">
+                    <span className="text-xl font-bold text-emerald-400 font-mono">
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format(inv.amount)}
+                    </span>
 
-                  {/* QR Code - Solução Única e Simples */}
-                  {inv.paymentUrl && (
-                    <div className="flex justify-center items-center bg-emerald-950/30 border border-emerald-500/30 rounded-lg p-8">
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="bg-white p-5 rounded-xl shadow-2xl">
-                          <QRCode value={inv.paymentUrl} size={160} level="H" />
-                        </div>
-                        <div className="text-center">
-                          <p className="text-sm font-bold text-emerald-400 uppercase tracking-wide mb-1">
-                            Escaneie para pagar
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            Use a câmera do seu celular
-                          </p>
-                        </div>
+                    {inv.paymentUrl && (
+                      <div className="flex flex-col items-end z-50 relative">
+                        <a
+                          href={inv.paymentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block bg-emerald-600 hover:bg-emerald-500 !text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-lg no-underline"
+                          style={{ cursor: "pointer", zIndex: 9999 }}
+                        >
+                          Pagar Agora →
+                        </a>
+                        <a
+                          href={inv.paymentUrl}
+                          target="_blank"
+                          className="text-[10px] text-blue-300 underline block mt-1 break-all max-w-[200px] text-right"
+                        >
+                          Link Direto
+                        </a>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -431,7 +430,7 @@ export function ReportPdf({
           <div className="mt-12 text-center text-gray-500 text-xs">
             <p>
               Este documento serve como descritivo técnico e financeiro dos
-              serviços prestados. 
+              serviços prestados.
             </p>
             <p className="mt-1 font-mono">
               {clientName} • {new Date().getFullYear()}

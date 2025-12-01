@@ -14,7 +14,7 @@ export interface BackupItem {
   data: string;
   tamanho: string;
   tipo: string;
-  link?: string; // Opcional, pois pode não ter link
+  link?: string;
 }
 
 export interface WPMonitorResponse {
