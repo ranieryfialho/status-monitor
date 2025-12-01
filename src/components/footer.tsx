@@ -1,4 +1,3 @@
-import { Github } from "lucide-react"
 
 export function Footer() {
   return (
@@ -7,13 +6,12 @@ export function Footer() {
         <span>Desenvolvido por</span>
         
         <a 
-          href="https://github.com/ranieryfialho" 
+          href="https://rafiweb.com.br/" 
           target="_blank" 
           rel="noopener noreferrer"
           className="font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1.5 hover:underline underline-offset-4"
         >
-          Rafiweb
-          <Github className="h-3 w-3" />
+          Raniery Fialho
         </a>
       </div>
     </footer>

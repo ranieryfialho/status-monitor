@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, DollarSign, FileText, Link as LinkIcon } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 function SubmitButton() {
   const { pending } = useFormStatus()
@@ -23,14 +23,13 @@ function SubmitButton() {
 interface CreateInvoiceDialogProps {
   clientId: string;
   children?: React.ReactNode;
-  open?: boolean; // Novo: Permite controle externo
-  onOpenChange?: (open: boolean) => void; // Novo: Permite controle externo
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function CreateInvoiceDialog({ clientId, children, open: controlledOpen, onOpenChange: setControlledOpen }: CreateInvoiceDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   
-  // Usa o estado externo se existir, senão usa o interno
   const isOpen = controlledOpen ?? internalOpen
   const setIsOpen = setControlledOpen ?? setInternalOpen
 
@@ -45,14 +44,13 @@ export function CreateInvoiceDialog({ clientId, children, open: controlledOpen, 
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      {/* Só renderiza o Trigger se tiver filhos (botão) */}
       {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       
       <DialogContent className="sm:max-w-[425px] bg-card border-border text-foreground">
         <DialogHeader>
           <DialogTitle>Nova Cobrança</DialogTitle>
           <DialogDescription>
-            Cole o link gerado no App da InfinitePay para o cliente pagar.
+            Defina o valor, vencimento e o link de pagamento.
           </DialogDescription>
         </DialogHeader>
         
@@ -65,14 +63,20 @@ export function CreateInvoiceDialog({ clientId, children, open: controlledOpen, 
               <Input id="description" name="description" placeholder="Ex: Manutenção Out/2025" required className="bg-background" />
             </div>
             
-            <div className="grid gap-2">
-                <Label htmlFor="amount">Valor (R$)</Label>
-                <Input id="amount" name="amount" type="number" step="0.01" placeholder="150.00" required className="bg-background font-mono text-lg" />
+            <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                    <Label htmlFor="amount">Valor (R$)</Label>
+                    <Input id="amount" name="amount" type="number" step="0.01" placeholder="R$ 150,00" required className="bg-background font-mono" />
+                </div>
+                <div className="grid gap-2">
+                    <Label htmlFor="dueDate">Vencimento</Label>
+                    <Input id="dueDate" name="dueDate" type="date" required className="bg-background" />
+                </div>
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="paymentUrl">Link InfinitePay</Label>
-              <Input id="paymentUrl" name="paymentUrl" type="url" placeholder="https://..." required className="bg-background" />
+              <Input id="paymentUrl" name="paymentUrl" type="url" placeholder="Informe o link de pagamento" required className="bg-background" />
             </div>
           </div>
 

@@ -36,7 +36,9 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
   const [copied, setCopied] = useState(false)
   
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
-  const [reportData, setReportData] = useState<any[] | null>(null) // Array agora
+  // Estado para armazenar o objeto completo retornado pela action
+  const [fullReportData, setFullReportData] = useState<{ sites: any[], invoices: any[] } | null>(null)
+  
   const printRef = useRef<HTMLDivElement>(null)
 
   const pendingCount = invoices ? invoices.filter(i => i.status === 'PENDING').length : 0;
@@ -52,8 +54,8 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
     try {
       const data = await getClientReportDataAction(clientSlug)
       
-      if (data && data.length > 0) {
-        setReportData(data)
+      if (data && data.sites.length > 0) {
+        setFullReportData(data) // Salva sites + faturas
         setTimeout(() => {
           handlePrint()
           setIsGeneratingPdf(false)
@@ -83,9 +85,16 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
       <CreateInvoiceDialog clientId={clientId} open={isInvoiceOpen} onOpenChange={setIsInvoiceOpen} />
       <AddSiteDialog clientSlug={clientSlug} open={isAddSiteOpen} onOpenChange={setIsAddSiteOpen} />
 
+      {/* ÁREA OCULTA PARA RENDERIZAR O PDF */}
       <div style={{ display: "none" }}>
         <div ref={printRef}>
-          {reportData && <ReportPdf clientName={clientName} sitesData={reportData} />}
+          {fullReportData && (
+            <ReportPdf 
+              clientName={clientName} 
+              sitesData={fullReportData.sites} 
+              invoices={fullReportData.invoices} 
+            />
+          )}
         </div>
       </div>
 
@@ -99,6 +108,7 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
         </DropdownMenuTrigger>
         
         <DropdownMenuContent align="end" className="w-[220px] bg-card border-border">
+          {/* ... itens de menu iguais ... */}
           <DropdownMenuLabel>Ações do Cliente</DropdownMenuLabel>
           
           <DropdownMenuItem asChild className="cursor-pointer focus:bg-muted">
@@ -115,6 +125,7 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
 
           <DropdownMenuSeparator className="bg-border" />
 
+          {/* BOTÃO GERAR PDF */}
           <DropdownMenuItem 
             onClick={(e) => { e.preventDefault(); generateReport(); }} 
             disabled={isGeneratingPdf}

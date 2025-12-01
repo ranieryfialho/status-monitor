@@ -3,18 +3,17 @@
 import { revalidatePath } from "next/cache"
 import prisma from "@/lib/prisma"
 
-// --- AÇÃO 1: CRIAR FATURA ---
 export async function createInvoiceAction(formData: FormData) {
-  // Simula delay visual
   await new Promise(resolve => setTimeout(resolve, 1000))
 
   const clientId = formData.get("clientId") as string
   const description = formData.get("description") as string
   const amountString = formData.get("amount") as string
   const paymentUrl = formData.get("paymentUrl") as string
+  const dueDateString = formData.get("dueDate") as string
 
-  if (!clientId || !description || !amountString || !paymentUrl) {
-    return { error: true, message: "Preencha todos os campos, incluindo o link." }
+  if (!clientId || !description || !amountString || !paymentUrl || !dueDateString) {
+    return { error: true, message: "Preencha todos os campos, incluindo vencimento e link." }
   }
 
   const amount = parseFloat(amountString.replace(',', '.'))
@@ -43,7 +42,6 @@ export async function createInvoiceAction(formData: FormData) {
   }
 }
 
-// --- AÇÃO 2: ALTERAR STATUS (DAR BAIXA) ---
 export async function toggleInvoiceStatusAction(invoiceId: string, currentStatus: string) {
   const newStatus = currentStatus === 'PENDING' ? 'PAID' : 'PENDING';
   
@@ -51,11 +49,11 @@ export async function toggleInvoiceStatusAction(invoiceId: string, currentStatus
     const updatedInvoice = await prisma.invoice.update({
       where: { id: invoiceId },
       data: { status: newStatus },
-      include: { client: true } // Necessário para saber qual dashboard atualizar
+      include: { client: true }
     });
 
     revalidatePath("/admin");
-    revalidatePath(`/dashboard/${updatedInvoice.client.slug}`); // Atualiza o painel do cliente
+    revalidatePath(`/dashboard/${updatedInvoice.client.slug}`);
     
     return { success: true, message: "Status atualizado!" };
   } catch (error) {

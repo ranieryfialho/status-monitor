@@ -6,7 +6,13 @@ import { fetchSiteData } from "../dashboard/[client]/lib/api"
 export async function getClientReportDataAction(clientSlug: string) {
   const client = await prisma.client.findUnique({
     where: { slug: clientSlug },
-    include: { sites: true }
+    include: { 
+      sites: true,
+      invoices: {
+        where: { status: 'PENDING' },
+        orderBy: { createdAt: 'desc' }
+      }
+    }
   })
 
   if (!client || client.sites.length === 0) {
@@ -41,5 +47,8 @@ export async function getClientReportDataAction(clientSlug: string) {
     })
   )
 
-  return sitesData
+  return {
+    sites: sitesData,
+    invoices: client.invoices
+  }
 }

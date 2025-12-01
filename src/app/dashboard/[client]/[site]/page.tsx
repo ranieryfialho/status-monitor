@@ -8,7 +8,6 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 
-// --- FUNÇÃO AUXILIAR: Transforma logs brutos em dados para o gráfico ---
 function processLogsToChart(logs: UpdateLog[]) {
   const chartData = [];
   const today = new Date();
@@ -58,6 +57,7 @@ export default async function DashboardPage({
 }) {
   const { client: clientSlug, site: siteId } = await params
   
+  // 1. BUSCA O CLIENTE E AS FATURAS PENDENTES
   const clientUser = await prisma.client.findUnique({
     where: { slug: clientSlug },
     include: { 
@@ -74,6 +74,7 @@ export default async function DashboardPage({
   const siteConfig = clientUser.sites.find(s => s.id === siteId)
   if (!siteConfig) notFound()
 
+  // 2. BUSCA DADOS TÉCNICOS VIA API DO PLUGIN
   const apiData = await fetchSiteData(clientSlug, siteId)
   
   let finalData: DashboardData;
@@ -98,9 +99,8 @@ export default async function DashboardPage({
 
   return (
     <div>
-        {/* Botão Voltar (Só aparece se tiver > 1 site) */}
         {clientUser.sites.length > 1 && (
-            <div className="p-4 md:p-8 pb-0">
+            <div className="p-4 md:p-8 pb-0 print:hidden">
                 <Button variant="ghost" asChild className="pl-0 hover:bg-transparent hover:text-primary">
                     <Link href={`/dashboard/${clientSlug}`}>
                         <ArrowLeft className="mr-2 h-4 w-4" />
@@ -110,11 +110,10 @@ export default async function DashboardPage({
             </div>
         )}
         
-        <div className="px-4 md:px-8 pt-6 -mb-6">
+        <div className="px-4 md:px-8 pt-6 -mb-6 print:hidden">
             <InvoiceList invoices={clientUser.invoices} />
         </div>
 
-        {/* Passamos o clientSlug para o componente visual saber quem está logado */}
         <DashboardView 
             clientSlug={clientSlug} 
             clientName={siteConfig.name} 
@@ -123,6 +122,7 @@ export default async function DashboardPage({
                 url: siteConfig.url,
                 token: siteConfig.apiToken
             }}
+            invoices={clientUser.invoices} // <--- ESTA LINHA É A CHAVE DO SUCESSO
         />
     </div>
   )
