@@ -10,10 +10,11 @@ export async function createInvoiceAction(formData: FormData) {
   const description = formData.get("description") as string
   const amountString = formData.get("amount") as string
   const paymentUrl = formData.get("paymentUrl") as string
-  const dueDateString = formData.get("dueDate") as string
+  
+  const dueDateString = formData.get("dueDate") as string 
 
   if (!clientId || !description || !amountString || !paymentUrl || !dueDateString) {
-    return { error: true, message: "Preencha todos os campos, incluindo vencimento e link." }
+    return { error: true, message: "Preencha todos os campos, incluindo o vencimento." }
   }
 
   const amount = parseFloat(amountString.replace(',', '.'))
@@ -22,12 +23,15 @@ export async function createInvoiceAction(formData: FormData) {
     return { error: true, message: "Valor inválido." }
   }
 
+  const dueDate = new Date(dueDateString + "T12:00:00");
+
   try {
     await prisma.invoice.create({
       data: {
         description,
         amount,
         paymentUrl,
+        dueDate,
         clientId,
         status: "PENDING"
       }
@@ -44,38 +48,26 @@ export async function createInvoiceAction(formData: FormData) {
 
 export async function toggleInvoiceStatusAction(invoiceId: string, currentStatus: string) {
   const newStatus = currentStatus === 'PENDING' ? 'PAID' : 'PENDING';
-  
   try {
     const updatedInvoice = await prisma.invoice.update({
       where: { id: invoiceId },
       data: { status: newStatus },
       include: { client: true }
     });
-
     revalidatePath("/admin");
     revalidatePath(`/dashboard/${updatedInvoice.client.slug}`);
-    
     return { success: true, message: "Status atualizado!" };
-  } catch (error) {
-    console.error("Erro ao atualizar status:", error)
-    return { error: true, message: "Erro ao atualizar." };
-  }
+  } catch (error) { return { error: true, message: "Erro ao atualizar." }; }
 }
 
-// --- AÇÃO 3: EXCLUIR FATURA ---
 export async function deleteInvoiceAction(invoiceId: string) {
   try {
     const deletedInvoice = await prisma.invoice.delete({
       where: { id: invoiceId },
       include: { client: true }
     });
-
     revalidatePath("/admin");
     revalidatePath(`/dashboard/${deletedInvoice.client.slug}`);
-    
     return { success: true, message: "Fatura removida!" };
-  } catch (error) {
-    console.error("Erro ao excluir fatura:", error)
-    return { error: true, message: "Erro ao excluir." };
-  }
+  } catch (error) { return { error: true, message: "Erro ao excluir." }; }
 }

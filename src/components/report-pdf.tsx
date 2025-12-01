@@ -8,11 +8,10 @@ import {
   LayoutTemplate,
   Server,
   Receipt,
-  ArrowRight,
 } from "lucide-react";
 import { WPMonitorResponse } from "@/types/api";
+import QRCode from "react-qr-code";
 
-// Tipos necessários
 interface SiteReportData extends WPMonitorResponse {
   id: string;
   name: string;
@@ -27,6 +26,7 @@ interface Invoice {
   paymentUrl: string | null;
   status: string;
   createdAt: Date;
+  dueDate?: Date | null;
 }
 
 interface ReportPdfProps {
@@ -50,14 +50,13 @@ export function ReportPdf({
     headerBorder: "border-white/20",
   };
 
-  // Cálculos Financeiros
   const pendingInvoices = invoices.filter((inv) => inv.status === "PENDING");
   const hasInvoices = pendingInvoices.length > 0;
   const totalDue = pendingInvoices.reduce((acc, inv) => acc + inv.amount, 0);
 
   return (
     <div className={`print-container font-sans text-white`}>
-      {/* LOOP DOS SITES */}
+      {/* LOOP DOS SITES (Mantido igual) */}
       {sitesData.map((data, index) => {
         const isOnline = data.status === "online";
         const shouldBreak = index < sitesData.length - 1 || hasInvoices;
@@ -98,7 +97,7 @@ export function ReportPdf({
               </div>
             </div>
 
-            {/* GRID DE KPIs */}
+            {/* KPIS */}
             <div className="grid grid-cols-2 gap-3 mb-6">
               <div
                 className={`border ${theme.border} ${theme.cardBg} rounded-lg p-3 flex flex-col justify-center`}
@@ -181,9 +180,8 @@ export function ReportPdf({
               </div>
             </div>
 
-            {/* CONTEÚDO PRINCIPAL */}
+            {/* TABELAS (Conteúdo) */}
             <div className="flex-1">
-              {/* ATUALIZAÇÕES */}
               <div className="mb-6 break-inside-avoid">
                 <h3 className="text-xs font-bold text-white border-l-4 border-emerald-500 pl-3 mb-3 uppercase tracking-wider">
                   Registro de Manutenção
@@ -244,7 +242,7 @@ export function ReportPdf({
                             colSpan={4}
                             className={`py-4 text-center ${theme.textMuted} italic`}
                           >
-                            Nenhuma atualização recente registrada.
+                            Nenhuma atualização recente.
                           </td>
                         </tr>
                       )}
@@ -253,63 +251,7 @@ export function ReportPdf({
                 </div>
               </div>
 
-              {/* BACKUPS */}
-              {data.backup?.historico && data.backup.historico.length > 0 && (
-                <div className="mb-6 break-inside-avoid">
-                  <h3 className="text-xs font-bold text-white border-l-4 border-blue-500 pl-3 mb-3 uppercase tracking-wider">
-                    Backups Realizados
-                  </h3>
-                  <div
-                    className={`border ${theme.border} rounded-lg overflow-hidden`}
-                  >
-                    <table className="w-full text-xs text-left">
-                      <thead className={theme.cardBg}>
-                        <tr>
-                          <th
-                            className={`py-2 px-3 font-bold ${theme.textMuted}`}
-                          >
-                            Data
-                          </th>
-                          <th
-                            className={`py-2 px-3 font-bold ${theme.textMuted}`}
-                          >
-                            Sistema
-                          </th>
-                          <th
-                            className={`py-2 px-3 font-bold ${theme.textMuted} text-right`}
-                          >
-                            Tamanho
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className={`divide-y ${theme.divide}`}>
-                        {data.backup.historico.slice(0, 5).map((bkp, i) => (
-                          <tr key={i}>
-                            <td className="py-2 px-3 font-medium text-white">
-                              {new Date(bkp.data).toLocaleDateString("pt-BR")}
-                              <span
-                                className={`text-[10px] ml-2 ${theme.textMuted}`}
-                              >
-                                {new Date(bkp.data).toLocaleTimeString("pt-BR")}
-                              </span>
-                            </td>
-                            <td className={`py-2 px-3 ${theme.textMuted}`}>
-                              {bkp.tipo}
-                            </td>
-                            <td
-                              className={`py-2 px-3 text-right font-mono ${theme.textMuted}`}
-                            >
-                              {bkp.tamanho}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* PLUGINS */}
+              {/* LISTA DE PLUGINS */}
               <div className="break-inside-avoid">
                 <h3 className="text-xs font-bold text-white border-l-4 border-orange-500 pl-3 mb-3 uppercase tracking-wider">
                   Plugins Instalados
@@ -347,7 +289,7 @@ export function ReportPdf({
         );
       })}
 
-      {/* PÁGINA FINANCEIRA */}
+      {/* --- PÁGINA FINANCEIRA ATUALIZADA --- */}
       {hasInvoices && (
         <div
           className={`${theme.bg} ${theme.textMain} w-full min-h-[297mm] p-12 relative flex flex-col justify-center`}
@@ -367,57 +309,71 @@ export function ReportPdf({
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               {pendingInvoices.map((inv) => (
                 <div
                   key={inv.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-black/20 rounded-xl border border-white/5"
+                  className="bg-black/20 rounded-xl border border-white/5 overflow-hidden"
                 >
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium text-white text-lg">
-                      {inv.description}
-                    </span>
-                    <span className="text-xs text-gray-500 font-mono uppercase tracking-wide">
-                      Vencimento:{" "}
-                      {new Date(inv.createdAt).toLocaleDateString("pt-BR")}
-                    </span>
+                  {/* Cabeçalho da Fatura */}
+                  <div className="p-6 pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-white/5">
+                    <div>
+                      <h3 className="text-xl font-bold text-white">
+                        {inv.description}
+                      </h3>
+                      {inv.dueDate && (
+                        <p className="text-sm text-gray-400 font-mono mt-1">
+                          VENCIMENTO:{" "}
+                          {new Date(inv.dueDate).toLocaleDateString("pt-BR")}
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-2 sm:mt-0 text-right">
+                      <p className="text-xs text-gray-500 uppercase tracking-wide">
+                        Valor a Pagar
+                      </p>
+                      <p className="text-2xl font-bold text-emerald-400 font-mono">
+                        {new Intl.NumberFormat("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }).format(inv.amount)}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2 mt-4 sm:mt-0">
-                    <span className="text-xl font-bold text-emerald-400 font-mono">
-                      {new Intl.NumberFormat("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      }).format(inv.amount)}
-                    </span>
 
-                    {inv.paymentUrl && (
-                      <div className="flex flex-col items-end z-50 relative">
-                        <a
-                          href={inv.paymentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block bg-emerald-600 hover:bg-emerald-500 !text-white px-5 py-2 rounded-lg text-sm font-bold transition-all shadow-lg no-underline"
-                          style={{ cursor: "pointer", zIndex: 9999 }}
-                        >
-                          Pagar Agora →
-                        </a>
-                        <a
-                          href={inv.paymentUrl}
-                          target="_blank"
-                          className="text-[10px] text-blue-300 underline block mt-1 break-all max-w-[200px] text-right"
-                        >
-                          Link Direto
-                        </a>
+                  {/* Área do QR Code (Substitui o Botão) */}
+                  {inv.paymentUrl && (
+                    <div className="p-6 bg-white/5 flex flex-row items-center gap-6">
+                      <div className="bg-white p-2 rounded shadow-lg shrink-0">
+                        <QRCode
+                          value={inv.paymentUrl}
+                          size={100}
+                          style={{
+                            height: "auto",
+                            maxWidth: "100%",
+                            width: "100px",
+                          }}
+                          viewBox={`0 0 256 256`}
+                        />
                       </div>
-                    )}
-                  </div>
+                      <div className="flex-1">
+                        <p className="text-white font-bold mb-1">
+                          Pagamento via Pix ou Cartão
+                        </p>
+                        <p className="text-sm text-gray-400 leading-relaxed">
+                          Para realizar o pagamento, aponte a câmera do seu
+                          celular para o QR Code ao lado.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
 
             <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-4">
               <div className="text-sm text-gray-400">
-                <p>Total a pagar:</p>
+                <p>Total Geral:</p>
               </div>
               <div className="text-4xl font-extrabold text-white font-mono">
                 {new Intl.NumberFormat("pt-BR", {
@@ -427,11 +383,9 @@ export function ReportPdf({
               </div>
             </div>
           </div>
+
           <div className="mt-12 text-center text-gray-500 text-xs">
-            <p>
-              Este documento serve como descritivo técnico e financeiro dos
-              serviços prestados.
-            </p>
+            <p>Este documento serve como descritivo técnico e financeiro.</p>
             <p className="mt-1 font-mono">
               {clientName} • {new Date().getFullYear()}
             </p>

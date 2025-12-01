@@ -2,10 +2,8 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Receipt, ExternalLink, CheckCircle2 } from "lucide-react"
+import { Receipt, ExternalLink } from "lucide-react"
 
-// Interface local para a fatura
 interface InvoiceItem {
   id: string;
   description: string;
@@ -13,6 +11,7 @@ interface InvoiceItem {
   status: string;
   paymentUrl: string | null;
   createdAt: Date;
+  dueDate?: Date | null; // <--- Adicionamos o tipo opcional aqui
 }
 
 interface InvoiceListProps {
@@ -20,10 +19,9 @@ interface InvoiceListProps {
 }
 
 export function InvoiceList({ invoices }: InvoiceListProps) {
-  // Filtra apenas as pendentes para dar destaque (ou mostra todas se preferir)
   const pendingInvoices = invoices.filter(i => i.status === 'PENDING');
 
-  if (pendingInvoices.length === 0) return null; // Se não tiver conta, não mostra nada
+  if (pendingInvoices.length === 0) return null;
 
   return (
     <Card className="border-l-4 border-l-yellow-500 shadow-lg bg-card rounded-[20px] mb-6">
@@ -42,9 +40,18 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
               
               <div>
                 <p className="font-medium text-foreground">{invoice.description}</p>
-                <p className="text-xs text-muted-foreground">
-                  Gerada em {new Date(invoice.createdAt).toLocaleDateString('pt-BR')}
-                </p>
+                <div className="flex flex-col gap-0.5">
+                    <p className="text-xs text-muted-foreground">
+                      Gerada em {new Date(invoice.createdAt).toLocaleDateString('pt-BR')}
+                    </p>
+                    
+                    {/* MOSTRAR VENCIMENTO SE EXISTIR */}
+                    {invoice.dueDate && (
+                        <p className="text-xs text-red-400 font-semibold">
+                          Vence em: {new Date(invoice.dueDate).toLocaleDateString('pt-BR')}
+                        </p>
+                    )}
+                </div>
               </div>
 
               <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">

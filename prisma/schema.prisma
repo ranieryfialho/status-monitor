@@ -7,6 +7,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // --- MODELOS ---
@@ -66,6 +67,7 @@ model Invoice {
   amount      Float    // Valor (ex: 150.00)
   status      String   @default("PENDING") // PENDING, PAID, CANCELLED
   paymentUrl  String?  // Link de pagamento (Opcional no início)
+  dueDate     DateTime?
   
   // Relação: Pertence a um Cliente
   clientId    String
