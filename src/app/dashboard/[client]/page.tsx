@@ -1,13 +1,15 @@
 import Link from "next/link"
 import { notFound, redirect } from "next/navigation"
+import { cookies } from "next/headers"
 import prisma from "@/lib/prisma"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Globe, ArrowRight, LogOut, Server, LayoutDashboard } from "lucide-react" // <--- Adicionado LayoutDashboard
+import { Globe, ArrowRight, LogOut, Server, LayoutDashboard, ShieldCheck } from "lucide-react"
 import { logoutAction } from "@/app/actions/auth"
 import { ChangePasswordDialog } from "@/components/change-password-dialog"
 import { MiniUptimeMonitor } from "@/components/mini-uptime-monitor" 
 import { GlobalStatusCard } from "@/components/global-status-card"
+import { ClientReportButton } from "@/components/client-report-button"
 
 export default async function ClientSitesPage({
   params,
@@ -15,6 +17,9 @@ export default async function ClientSitesPage({
   params: Promise<{ client: string }>
 }) {
   const { client: clientSlug } = await params
+  
+  const cookieStore = await cookies()
+  const isAdmin = cookieStore.has('admin_session')
   
   const clientUser = await prisma.client.findUnique({
     where: { slug: clientSlug },
@@ -51,6 +56,27 @@ export default async function ClientSitesPage({
         </div>
 
         <div className="flex items-center gap-2">
+          
+          {/* BOTÃO ADMIN VERDE (Estilo Uptime) */}
+          {isAdmin && (
+            <Button 
+              variant="outline" 
+              className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-600 transition-colors" 
+              asChild
+            >
+              <Link href="/admin">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                Painel Administrativo
+              </Link>
+            </Button>
+          )}
+
+          <ClientReportButton 
+            clientSlug={clientSlug} 
+            clientName={clientUser.name} 
+            variant="header" 
+          />
+
           <ChangePasswordDialog type="client" identifier={clientSlug} />
 
           <form action={logoutAction}>
@@ -85,17 +111,14 @@ export default async function ClientSitesPage({
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {clientUser.sites.map((site) => (
-          // Removemos o Link wrapper geral para evitar conflito de clique nos botões
           <Card key={site.id} className="h-full border-none shadow-lg bg-card rounded-[20px] transition-all hover:shadow-xl border border-transparent hover:border-primary/20 flex flex-col">
               
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start h-8 mb-2">
-                  {/* Ícone Decorativo */}
                   <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
                     <Globe className="h-4 w-4" />
                   </div>
 
-                  {/* Monitor Uptime */}
                   <div className="w-[120px] h-full flex items-center justify-end">
                     <MiniUptimeMonitor url={site.url} token={site.apiToken} />
                   </div>
@@ -112,7 +135,6 @@ export default async function ClientSitesPage({
               <CardContent className="mt-auto pt-4">
                 <div className="flex items-center justify-between border-t border-border/50 pt-4 mt-2">
                   
-                  {/* Link Principal: Ver Dashboard Interno */}
                   <Link 
                     href={`/dashboard/${clientSlug}/${site.id}`} 
                     className="flex items-center text-sm font-medium text-primary hover:underline group"
@@ -120,22 +142,26 @@ export default async function ClientSitesPage({
                     Ver Dashboard <ArrowRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-1" />
                   </Link>
 
-                  {/* Botões de Ação Rápida (Estilo Admin) */}
                   <div className="flex items-center gap-1">
                     
-                    {/* Botão Site */}
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10" asChild title="Visitar Site">
                       <a href={site.url} target="_blank" rel="noopener noreferrer">
                         <Globe className="h-4 w-4" />
                       </a>
                     </Button>
 
-                    {/* Botão Admin */}
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10" asChild title="Acessar WP Admin">
                       <a href={`${site.url.replace(/\/$/, "")}/wp-admin`} target="_blank" rel="noopener noreferrer">
                         <LayoutDashboard className="h-4 w-4" />
                       </a>
                     </Button>
+
+                    <ClientReportButton 
+                        clientSlug={clientSlug} 
+                        clientName={site.name} 
+                        siteId={site.id} 
+                        variant="icon" 
+                    />
 
                   </div>
                 </div>

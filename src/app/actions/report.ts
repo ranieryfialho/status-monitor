@@ -52,3 +52,44 @@ export async function getClientReportDataAction(clientSlug: string) {
     invoices: client.invoices
   }
 }
+
+export async function getSingleSiteReportDataAction(clientSlug: string, siteId: string) {
+  const client = await prisma.client.findUnique({
+    where: { slug: clientSlug },
+    include: { 
+      sites: {
+        where: { id: siteId }
+      },
+      invoices: {
+        where: { status: 'PENDING' },
+        orderBy: { createdAt: 'desc' }
+      }
+    }
+  })
+
+  if (!client || client.sites.length === 0) {
+    return null
+  }
+
+  const site = client.sites[0]
+  const data = await fetchSiteData(clientSlug, site.id)
+  
+  const siteReportData = {
+    id: site.id,
+    name: site.name,
+    url: site.url,
+    status: data ? "online" : "offline",
+    lastCheck: new Date().toISOString(),
+    ...(data || {
+      sistema: { nome_site: site.name, url: site.url, wp_version: "-", php: "-", ip: "-" },
+      logs_recentes: [],
+      backup: { ativo: false },
+      plugins_instalados: []
+    })
+  }
+
+  return {
+    sites: [siteReportData],
+    invoices: client.invoices
+  }
+}

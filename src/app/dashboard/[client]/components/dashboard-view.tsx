@@ -4,26 +4,25 @@ import { useRef } from "react";
 import { useReactToPrint } from "react-to-print";
 import { motion } from "framer-motion";
 import { logoutAction } from "@/app/actions/auth";
+import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UpdatesTable } from "./updates-table";
 import { UptimeMonitor } from "./uptime-monitor";
 import { InstalledPlugins } from "./installed-plugins";
-// REMOVIDO O IMPORT QUE CAUSAVA ERRO (InstalledPlugin) pois não é usado diretamente aqui como tipo
 import { WPMonitorResponse } from "@/types/api";
 import {
   Download,
   LogOut,
   Database,
-  Globe,
   CheckCircle2,
   XCircle,
   HardDrive,
+  ShieldCheck,
 } from "lucide-react";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { ReportPdf } from "@/components/report-pdf";
 
-// Interface local para evitar conflitos se o types/api.ts estiver desatualizado
 interface DashboardData extends WPMonitorResponse {
   status: "online" | "offline";
   lastCheck: string;
@@ -52,6 +51,7 @@ interface DashboardViewProps {
     token: string;
   };
   invoices?: Invoice[];
+  isAdmin?: boolean;
 }
 
 const printPageStyle = `
@@ -86,6 +86,7 @@ export function DashboardView({
   data,
   siteCredentials,
   invoices = [],
+  isAdmin = false,
 }: DashboardViewProps) {
   const componentRef = useRef<HTMLDivElement>(null);
 
@@ -111,7 +112,6 @@ export function DashboardView({
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300">
-      {/* HEADER */}
       <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 print:hidden">
         <div className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-muted-foreground">
@@ -129,7 +129,22 @@ export function DashboardView({
         </div>
 
         <div className="flex items-center gap-2">
+          
+          {isAdmin && (
+            <Button 
+              variant="outline" 
+              className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/20 hover:text-emerald-600 transition-colors" 
+              asChild
+            >
+              <Link href="/admin">
+                <ShieldCheck className="mr-2 h-4 w-4" />
+                Painel Administrativo
+              </Link>
+            </Button>
+          )}
+
           <ChangePasswordDialog type="client" identifier={clientSlug} />
+          
           <form action={logoutAction}>
             <Button
               variant="outline"
@@ -138,6 +153,7 @@ export function DashboardView({
               <LogOut className="mr-2 h-4 w-4" /> Sair
             </Button>
           </form>
+          
           <Button
             onClick={() => handlePrint()}
             className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all active:scale-95"
@@ -147,7 +163,7 @@ export function DashboardView({
         </div>
       </div>
 
-      {/* DASHBOARD TELA */}
+      {/* CONTEÚDO DO DASHBOARD (Mantido igual) */}
       <div className="print:hidden">
         <motion.div
           variants={container}
@@ -239,7 +255,6 @@ export function DashboardView({
               </Card>
             </motion.div>
 
-            {/* ----- CARD DE BACKUP (CORREÇÃO DO ESPAÇAMENTO AQUI) ----- */}
             <motion.div variants={item}>
               <Card className="h-full border-none shadow-lg bg-card rounded-[20px] flex flex-col">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -262,7 +277,6 @@ export function DashboardView({
                           className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border border-border/30 hover:bg-muted/50 transition-colors"
                         >
                           <div className="flex flex-col gap-0.5">
-                            {/* CORREÇÃO: Adicionado 'gap-2' nesta linha abaixo */}
                             <span className="text-xs font-bold text-foreground flex items-center gap-2">
                               <div
                                 className={`h-1.5 w-1.5 rounded-full ${

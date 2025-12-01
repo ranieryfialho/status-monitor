@@ -9,6 +9,7 @@ import { ClientActions } from "./components/client-actions";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import { MiniUptimeMonitor } from "@/components/mini-uptime-monitor";
 import { GlobalStatusCard } from "@/components/global-status-card";
+import { EditSiteDialog } from "@/components/edit-site-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,6 @@ export default async function AdminDashboard() {
     orderBy: { createdAt: "desc" },
   });
 
-  // Prepara a lista de sites para o monitor global
   const allSites = clients.flatMap((client) =>
     client.sites.map((site) => ({ url: site.url, apiToken: site.apiToken }))
   );
@@ -55,7 +55,6 @@ export default async function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8 transition-colors duration-300">
-      {/* CABEÇALHO ADMIN */}
       <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-sm font-medium text-muted-foreground">
@@ -81,7 +80,6 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* CARDS DE RESUMO */}
       <div className="grid gap-6 md:grid-cols-3 mb-8">
         <Card className="border-none shadow-lg bg-card rounded-[20px]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -120,7 +118,6 @@ export default async function AdminDashboard() {
         <GlobalStatusCard sites={allSites} />
       </div>
 
-      {/* LISTA DE CLIENTES */}
       <Card className="border-none shadow-lg bg-card rounded-[20px] overflow-hidden">
         <div className="p-6 border-b border-border/50">
           <h3 className="text-lg font-bold text-foreground">
@@ -170,7 +167,6 @@ export default async function AdminDashboard() {
                     </div>
                   </TableCell>
 
-                  {/* Célula Combinada (Sites + Monitor) */}
                   <TableCell className="py-4" colSpan={2}>
                     <div className="flex flex-col gap-3">
                       {client.sites.map((site) => (
@@ -178,7 +174,6 @@ export default async function AdminDashboard() {
                           key={site.id}
                           className="flex items-center w-full group border-b last:border-0 border-border/40 pb-2 last:pb-0"
                         >
-                          {/* --- ÁREA DO SITE --- */}
                           <div className="flex items-center justify-between w-[350px] shrink-0 pr-4 gap-2">
                             <span
                               className="text-sm font-medium text-foreground"
@@ -220,6 +215,9 @@ export default async function AdminDashboard() {
                                   <LayoutDashboard className="h-3.5 w-3.5" />
                                 </a>
                               </Button>
+                              
+                              <EditSiteDialog site={site} />
+
                               <form action={deleteSiteAction}>
                                 <input
                                   type="hidden"
@@ -237,7 +235,6 @@ export default async function AdminDashboard() {
                             </div>
                           </div>
 
-                          {/* Mini Monitor */}
                           <div className="flex-1 flex justify-center px-4">
                             <MiniUptimeMonitor
                               url={site.url}

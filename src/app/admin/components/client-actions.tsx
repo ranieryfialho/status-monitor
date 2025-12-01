@@ -10,10 +10,11 @@ import {
 import { AddSiteDialog } from "@/components/add-site-dialog"
 import { CreateInvoiceDialog } from "@/components/create-invoice-dialog"
 import { ManageInvoicesDialog } from "@/components/manage-invoices-dialog"
+import { EditClientDialog } from "@/components/edit-client-dialog"
 import { deleteClientAction } from "@/app/actions/client"
 import { getClientReportDataAction } from "@/app/actions/report" 
 import { ReportPdf } from "@/components/report-pdf"
-import { MoreHorizontal, Trash, LayoutDashboard, Plus, DollarSign, Receipt, Share2, Check, FileText, Loader2 } from "lucide-react"
+import { MoreHorizontal, Trash, LayoutDashboard, Plus, DollarSign, Receipt, Share2, Check, FileText, Loader2, Pencil } from "lucide-react"
 
 interface ClientActionsProps {
   clientSlug: string;
@@ -33,10 +34,10 @@ const printPageStyle = `
 export function ClientActions({ clientSlug, clientId, clientName, accessCode, invoices }: ClientActionsProps) {
   const [isInvoiceOpen, setIsInvoiceOpen] = useState(false)
   const [isAddSiteOpen, setIsAddSiteOpen] = useState(false)
+  const [isEditClientOpen, setIsEditClientOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
-  // Estado para armazenar o objeto completo retornado pela action
   const [fullReportData, setFullReportData] = useState<{ sites: any[], invoices: any[] } | null>(null)
   
   const printRef = useRef<HTMLDivElement>(null)
@@ -55,7 +56,7 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
       const data = await getClientReportDataAction(clientSlug)
       
       if (data && data.sites.length > 0) {
-        setFullReportData(data) // Salva sites + faturas
+        setFullReportData(data)
         setTimeout(() => {
           handlePrint()
           setIsGeneratingPdf(false)
@@ -84,8 +85,13 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
     <>
       <CreateInvoiceDialog clientId={clientId} open={isInvoiceOpen} onOpenChange={setIsInvoiceOpen} />
       <AddSiteDialog clientSlug={clientSlug} open={isAddSiteOpen} onOpenChange={setIsAddSiteOpen} />
+      
+      <EditClientDialog 
+        client={{ id: clientId, name: clientName, slug: clientSlug, accessCode: accessCode }} 
+        open={isEditClientOpen} 
+        onOpenChange={setIsEditClientOpen} 
+      />
 
-      {/* ÁREA OCULTA PARA RENDERIZAR O PDF */}
       <div style={{ display: "none" }}>
         <div ref={printRef}>
           {fullReportData && (
@@ -108,7 +114,6 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
         </DropdownMenuTrigger>
         
         <DropdownMenuContent align="end" className="w-[220px] bg-card border-border">
-          {/* ... itens de menu iguais ... */}
           <DropdownMenuLabel>Ações do Cliente</DropdownMenuLabel>
           
           <DropdownMenuItem asChild className="cursor-pointer focus:bg-muted">
@@ -125,7 +130,6 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
 
           <DropdownMenuSeparator className="bg-border" />
 
-          {/* BOTÃO GERAR PDF */}
           <DropdownMenuItem 
             onClick={(e) => { e.preventDefault(); generateReport(); }} 
             disabled={isGeneratingPdf}
@@ -157,6 +161,11 @@ export function ClientActions({ clientSlug, clientId, clientName, accessCode, in
           <DropdownMenuItem onSelect={() => setIsAddSiteOpen(true)} className="cursor-pointer focus:bg-muted">
              <Plus className="mr-2 h-4 w-4" />
              <span>Adicionar Site</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem onSelect={() => setIsEditClientOpen(true)} className="cursor-pointer focus:bg-muted">
+             <Pencil className="mr-2 h-4 w-4" />
+             <span>Editar Gestor</span>
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="bg-border" />

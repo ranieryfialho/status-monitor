@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { cookies } from "next/headers"
 import prisma from "@/lib/prisma"
 import { fetchSiteData } from "../lib/api"
 import { DashboardView } from "../components/dashboard-view"
@@ -57,7 +58,9 @@ export default async function DashboardPage({
 }) {
   const { client: clientSlug, site: siteId } = await params
   
-  // 1. BUSCA O CLIENTE E AS FATURAS PENDENTES
+  const cookieStore = await cookies()
+  const isAdmin = cookieStore.has('admin_session')
+
   const clientUser = await prisma.client.findUnique({
     where: { slug: clientSlug },
     include: { 
@@ -74,7 +77,6 @@ export default async function DashboardPage({
   const siteConfig = clientUser.sites.find(s => s.id === siteId)
   if (!siteConfig) notFound()
 
-  // 2. BUSCA DADOS TÉCNICOS VIA API DO PLUGIN
   const apiData = await fetchSiteData(clientSlug, siteId)
   
   let finalData: DashboardData;
@@ -122,7 +124,8 @@ export default async function DashboardPage({
                 url: siteConfig.url,
                 token: siteConfig.apiToken
             }}
-            invoices={clientUser.invoices} // <--- ESTA LINHA É A CHAVE DO SUCESSO
+            invoices={clientUser.invoices}
+            isAdmin={isAdmin}
         />
     </div>
   )
